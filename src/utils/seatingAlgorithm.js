@@ -18,27 +18,40 @@ export class SeatingOptimizer {
       if (desk.y < minY) minY = desk.y;
     });
 
-    // Fallback om inga bänkar finns
     if (minX === Infinity) minX = 0;
     if (maxX === -Infinity) maxX = 800;
     if (minY === Infinity) minY = 0;
 
     const roomWidth = maxX - minX;
-    // Gör vägg-gränsen mer dynamisk (20% av rummets bredd, men minst 250px)
-    const wallThreshold = Math.max(250, roomWidth * 0.2); 
-    // Generösare gräns för "längst fram" (ca de första 2-3 raderna)
-    const frontThreshold = 250; 
+    
+    // Snävare gränser!
+    const wallThreshold = Math.max(150, roomWidth * 0.15); // Bara bänkar väldigt nära kanten
+    const frontThreshold = 80; // MYCKET snävare - bara den absoluta frontraden får godkänt
 
-    this.frontDeskIds = new Set();
-    this.wallDeskIds = new Set();
+    this.frontSeatIds = new Set();
+    this.wallSeatIds = new Set();
     this.soloDeskIds = new Set();
 
     this.desks.forEach(desk => {
-      if (desk.y <= minY + frontThreshold) this.frontDeskIds.add(desk.id);
-      if (desk.x <= minX + wallThreshold || (desk.x + desk.width) >= maxX - wallThreshold) {
-        this.wallDeskIds.add(desk.id);
-      }
       if (desk.capacity === 1) this.soloDeskIds.add(desk.id);
+
+      for (let i = 0; i < desk.capacity; i++) {
+        const seatKey = `${desk.id}-${i}`;
+
+        // Längst fram?
+        if (desk.y <= minY + frontThreshold) {
+          this.frontSeatIds.add(seatKey);
+        }
+
+        // Vid vänster vägg? (Måste vara bänken vid väggen OCH den vänstra stolen, index 0)
+        if (desk.x <= minX + wallThreshold && i === 0) {
+          this.wallSeatIds.add(seatKey);
+        }
+        // Vid höger vägg? (Måste vara bänken vid väggen OCH den högra stolen, sista indexet)
+        else if ((desk.x + desk.width) >= maxX - wallThreshold && i === desk.capacity - 1) {
+          this.wallSeatIds.add(seatKey);
+        }
+      }
     });
 
     this.flatSeats = [];
@@ -108,10 +121,10 @@ export class SeatingOptimizer {
     soloGroup.forEach(s => { if (!place(s, seat => this.soloDeskIds.has(seat.deskId))) place(s); });
 
     const frontGroup = pool.filter(s => s.needsFront); pool = pool.filter(s => !s.needsFront);
-    frontGroup.forEach(s => { if (!place(s, seat => this.frontDeskIds.has(seat.deskId))) place(s); });
+    frontGroup.forEach(s => { if (!place(s, seat => this.frontSeatIds.has(`${seat.deskId}-${seat.seatIndex}`))) place(s); });
 
     const wallGroup = pool.filter(s => s.needsWall); pool = pool.filter(s => !s.needsWall);
-    wallGroup.forEach(s => { if (!place(s, seat => this.wallDeskIds.has(seat.deskId))) place(s); });
+    wallGroup.forEach(s => { if (!place(s, seat => this.wallSeatIds.has(`${seat.deskId}-${seat.seatIndex}`))) place(s); });
 
     pool.forEach(s => place(s));
     return grid;
@@ -169,11 +182,12 @@ export class SeatingOptimizer {
 
     grid.forEach(seat => {
       if (!seat.student) return;
-      const { student, deskId } = seat;
+      const { student, deskId, seatIndex } = seat;
+      const seatKey = `${deskId}-${seatIndex}`;
       
-      // HÖJD STRAFFPOÄNG: Om man bryter dessa regler kostar det enormt mycket (5000 istället för 200/500)
-      if (student.needsFront && !this.frontDeskIds.has(deskId)) score += 5000;
-      if (student.needsWall && !this.wallDeskIds.has(deskId)) score += 5000;
+      // Kollar exakt rätt stol, inte bara bänken!
+      if (student.needsFront && !this.frontSeatIds.has(seatKey)) score += 5000;
+      if (student.needsWall && !this.wallSeatIds.has(seatKey)) score += 5000;
       
       if (student.needsSolo) {
         const neighborsCount = (deskStudents.get(deskId)?.length || 1) - 1;
@@ -194,6 +208,6 @@ export class SeatingOptimizer {
   }
 
   countHardConflicts(grid) {
-    return 0; // Förenklad för nu
+    return 0; 
   }
 }
