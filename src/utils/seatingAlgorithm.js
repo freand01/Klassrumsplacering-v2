@@ -18,14 +18,27 @@ export class SeatingOptimizer {
       if (desk.y < minY) minY = desk.y;
     });
 
+    // Fallback om inga bänkar finns
+    if (minX === Infinity) minX = 0;
+    if (maxX === -Infinity) maxX = 800;
+    if (minY === Infinity) minY = 0;
+
+    const roomWidth = maxX - minX;
+    // Gör vägg-gränsen mer dynamisk (20% av rummets bredd, men minst 250px)
+    const wallThreshold = Math.max(250, roomWidth * 0.2); 
+    // Generösare gräns för "längst fram" (ca de första 2-3 raderna)
+    const frontThreshold = 250; 
+
     this.frontDeskIds = new Set();
     this.wallDeskIds = new Set();
     this.soloDeskIds = new Set();
 
     this.desks.forEach(desk => {
-      if (desk.y <= minY + 180) this.frontDeskIds.add(desk.id); // Längst fram
-      if (desk.x <= minX + 180 || (desk.x + desk.width) >= maxX - 180) this.wallDeskIds.add(desk.id); // Vid vägg
-      if (desk.capacity === 1) this.soloDeskIds.add(desk.id); // Ensam
+      if (desk.y <= minY + frontThreshold) this.frontDeskIds.add(desk.id);
+      if (desk.x <= minX + wallThreshold || (desk.x + desk.width) >= maxX - wallThreshold) {
+        this.wallDeskIds.add(desk.id);
+      }
+      if (desk.capacity === 1) this.soloDeskIds.add(desk.id);
     });
 
     this.flatSeats = [];
@@ -157,8 +170,11 @@ export class SeatingOptimizer {
     grid.forEach(seat => {
       if (!seat.student) return;
       const { student, deskId } = seat;
-      if (student.needsFront && !this.frontDeskIds.has(deskId)) score += ALGORITHM_CONSTANTS.ROW_PENALTY_MULTIPLIER * 10;
-      if (student.needsWall && !this.wallDeskIds.has(deskId)) score += 500;
+      
+      // HÖJD STRAFFPOÄNG: Om man bryter dessa regler kostar det enormt mycket (5000 istället för 200/500)
+      if (student.needsFront && !this.frontDeskIds.has(deskId)) score += 5000;
+      if (student.needsWall && !this.wallDeskIds.has(deskId)) score += 5000;
+      
       if (student.needsSolo) {
         const neighborsCount = (deskStudents.get(deskId)?.length || 1) - 1;
         if (neighborsCount > 0) score += ALGORITHM_CONSTANTS.SOLO_PENALTY * neighborsCount;
@@ -178,8 +194,6 @@ export class SeatingOptimizer {
   }
 
   countHardConflicts(grid) {
-    let count = 0;
-    // Förenklad räkning här
-    return count; 
+    return 0; // Förenklad för nu
   }
 }
