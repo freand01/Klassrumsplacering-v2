@@ -107,15 +107,19 @@ const AppContent = () => {
             <div className="flex items-center gap-3">
               <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm"><LayoutGrid className="text-white" size={24} /></div>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">KlassPlacering <Sparkles className="text-yellow-300" size={18} /></h1>
-                <p className="text-xs text-white/80">Modern fri placering</p>
+                <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">Klassrumsplacering <Sparkles className="text-yellow-300" size={18} /></h1>
+                <p className="text-xs text-white/80">Modern placering i klassrummet</p>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" className="text-sm px-4 bg-white/20 text-white hover:bg-white/30 border-white/30" onClick={handleExportData}><FileJson size={16} /> Spara</Button>
+            <div className="flex gap-3">
+              <Button variant="outline" className="text-sm w-32 justify-center border-2 border-white/30 bg-white/20 text-white hover:bg-white/30 hover:border-white/50" onClick={handleExportData}>
+                <FileJson size={16} /> Spara
+              </Button>
               <label className="cursor-pointer">
                 <input type="file" onChange={handleImportData} accept=".json" className="hidden" />
-                <div className="px-4 py-2 bg-white/20 border border-white/30 rounded-lg font-medium flex items-center gap-2 text-white hover:bg-white/30 text-sm"><FolderOpen size={16} /> Öppna</div>
+                <div className="text-sm w-32 px-4 py-2.5 bg-white/20 border-2 border-white/30 rounded-xl font-semibold flex items-center justify-center gap-2 text-white hover:bg-white/30 hover:border-white/50 transition-all">
+                  <FolderOpen size={16} /> Öppna
+                </div>
               </label>
             </div>
           </div>

@@ -26,8 +26,8 @@ const ClassSelector = ({ showNotification }) => {
   };
 
   return (
-    <div className="bg-white border-b border-gray-200 p-4 print:hidden">
-      <div className="max-w-5xl mx-auto flex flex-col md:flex-row gap-4 items-center justify-between">
+	<div className="max-w-5xl mx-auto flex flex-col md:flex-row gap-4 items-center justify-between">
+     <div className="flex items-center flex-wrap gap-3 w-full md:w-auto">
         <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
           <span className="text-sm font-bold text-gray-600 uppercase tracking-wider flex items-center gap-2">
             <GraduationCap size={18} className="text-indigo-600" /> Klass:
