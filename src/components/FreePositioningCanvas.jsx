@@ -117,7 +117,8 @@ const FreePositioningCanvas = ({ isDesignMode, currentBrush, desks = [], onDesks
     if (draggedDesk) {
       const config = DESK_TYPES[draggedDesk.type];
       let newX = Math.max(0, Math.min(e.clientX - dragOffset.x, rect.width - config.width));
-      let newY = Math.max(80, Math.min(e.clientY - dragOffset.y, rect.height - config.height));
+      // TILLÅT ATT DRA HUR LÅNGT NER SOM HELST - RUMMET VÄXER!
+      let newY = Math.max(80, e.clientY - dragOffset.y);
       setDraggedDesk({ ...draggedDesk, x: newX, y: newY });
       onDesksChange(desks.map(d => d.id === draggedDesk.id ? { ...d, x: newX, y: newY } : d));
     }
@@ -140,6 +141,18 @@ const FreePositioningCanvas = ({ isDesignMode, currentBrush, desks = [], onDesks
     }
   }, [draggedDesk, rotatingDesk, handleMouseMove, handleMouseUp]);
 
+  // --- DYNAMISK HÖJD BERÄKNAS HÄR ---
+  let dynamicHeight = 700; // Standardhöjd om rummet är tomt
+  if (desks.length > 0) {
+    const maxBottom = Math.max(...desks.map(d => {
+      const config = DESK_TYPES[d.type] || { height: 60 };
+      const maxDim = Math.max(config.width, config.height); // Hanterar rotation
+      return d.y + maxDim;
+    }));
+    // Sätt höjden till nedersta bänken + 150 pixlar luft!
+    dynamicHeight = Math.max(700, maxBottom + 150); 
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex gap-6 justify-center bg-white p-4 rounded-xl border border-gray-100 print:hidden">
@@ -147,7 +160,12 @@ const FreePositioningCanvas = ({ isDesignMode, currentBrush, desks = [], onDesks
         <div className="text-center"><div className="text-2xl font-bold text-purple-600">{desks.reduce((s, d) => s + d.capacity, 0)}</div><div className="text-xs text-gray-500">Platser</div></div>
         <div className="text-center"><div className="text-2xl font-bold text-green-600">{desks.reduce((s, d) => s + (d.students?.filter(Boolean).length || 0), 0)}</div><div className="text-xs text-gray-500">Placerade</div></div>
       </div>
-      <div ref={canvasRef} className="relative bg-white rounded-2xl shadow-xl border-2 border-gray-200 overflow-hidden print:shadow-none print:border print:rounded-none" style={{ height: '1200px', width: '100%' }} onClick={handleCanvasClick}>
+      <div 
+        ref={canvasRef} 
+        className="relative bg-white rounded-2xl shadow-xl border-2 border-gray-200 overflow-hidden print:shadow-none print:border print:rounded-none transition-all duration-300 ease-in-out" 
+        style={{ height: `${dynamicHeight}px`, width: '100%' }} 
+        onClick={handleCanvasClick}
+      >
         <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-gray-800 to-gray-700 flex items-center justify-center text-white font-bold text-lg tracking-widest shadow-lg z-10 border-b-4 border-gray-900"><div className="w-2 h-2 rounded-full bg-green-400 animate-pulse mr-3 print:hidden"></div>WHITEBOARD<div className="w-2 h-2 rounded-full bg-green-400 animate-pulse ml-3 print:hidden"></div></div>
         <svg className="absolute inset-0 pointer-events-none opacity-10 print:hidden" style={{ zIndex: 1 }}><defs><pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse"><path d="M 50 0 L 0 0 0 50" fill="none" stroke="gray" strokeWidth="0.5"/></pattern></defs><rect width="100%" height="100%" fill="url(#grid)" /></svg>
         <div className="absolute inset-0" style={{ zIndex: 5 }}>

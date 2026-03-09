@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { PenTool, RefreshCw, Printer, Save, Eraser, RotateCcw, LayoutTemplate, Users, Magnet, AlignCenter } from 'lucide-react';
+import { PenTool, RefreshCw, Printer, Save, RotateCcw, LayoutTemplate, Users, Magnet, AlignCenter } from 'lucide-react';
 import Button from '../Button';
 import Input from '../Input';
 import FreePositioningCanvas from '../FreePositioningCanvas';
@@ -101,18 +101,14 @@ const LayoutTab = ({ showNotification }) => {
     let deskId = Date.now();
 
     const CANVAS_WIDTH = 800;
-    const CANVAS_HEIGHT = 1200; 
-    const PADDING_BOTTOM = 100; 
     const START_Y = 120; 
 
     if (type === 'rows') {
       const desksNeeded = Math.ceil(count / 2); 
       const cols = desksNeeded >= 12 ? 3 : (desksNeeded >= 8 ? 4 : 2); 
-      const rows = Math.ceil(desksNeeded / cols);
       
       const gapX = 220;
-      const availableHeight = CANVAS_HEIGHT - START_Y - PADDING_BOTTOM;
-      const gapY = Math.max(90, availableHeight / Math.max(1, rows - 1));
+      const gapY = 110; // Alltid snyggt, fast avstånd
 
       const totalWidth = (cols - 1) * gapX;
       const startX = (CANVAS_WIDTH - totalWidth) / 2;
@@ -120,7 +116,7 @@ const LayoutTab = ({ showNotification }) => {
       for (let i = 0; i < desksNeeded; i++) {
         const r = Math.floor(i / cols);
         const c = i % cols;
-        const desksInThisRow = (r === rows - 1 && desksNeeded % cols !== 0) ? (desksNeeded % cols) : cols;
+        const desksInThisRow = (r === Math.ceil(desksNeeded / cols) - 1 && desksNeeded % cols !== 0) ? (desksNeeded % cols) : cols;
         const rowStartX = startX + ((cols - desksInThisRow) * gapX) / 2;
 
         newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.PAIR, x: rowStartX + c * gapX, y: START_Y + r * gapY, capacity: 2, students: [], rotation: 0 });
@@ -128,11 +124,9 @@ const LayoutTab = ({ showNotification }) => {
     } else if (type === 'islands') {
       const desksNeeded = Math.ceil(count / 4);
       const cols = desksNeeded >= 6 ? 3 : 2; 
-      const rows = Math.ceil(desksNeeded / cols);
       
-      const gapX = 250;
-      const availableHeight = CANVAS_HEIGHT - START_Y - PADDING_BOTTOM;
-      const gapY = Math.max(140, availableHeight / Math.max(1, rows - 1));
+      const gapX = 260;
+      const gapY = 180; // Alltid snyggt, fast avstånd
 
       const totalWidth = (cols - 1) * gapX;
       const startX = (CANVAS_WIDTH - totalWidth) / 2;
@@ -140,41 +134,38 @@ const LayoutTab = ({ showNotification }) => {
       for (let i = 0; i < desksNeeded; i++) {
         const r = Math.floor(i / cols);
         const c = i % cols;
-        const desksInThisRow = (r === rows - 1 && desksNeeded % cols !== 0) ? (desksNeeded % cols) : cols;
+        const desksInThisRow = (r === Math.ceil(desksNeeded / cols) - 1 && desksNeeded % cols !== 0) ? (desksNeeded % cols) : cols;
         const rowStartX = startX + ((cols - desksInThisRow) * gapX) / 2;
 
         newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.GROUP_4, x: rowStartX + c * gapX, y: START_Y + r * gapY, capacity: 4, students: [], rotation: 0 });
       }
     } else if (type === 'horseshoe') {
-      const sideCount = Math.floor(count / 3); 
-      const bottomCount = count - (sideCount * 2); 
-      const MIN_GAP = 70; 
+      const MAX_BOTTOM = 7; // Fler får inte plats mellan väggarna rent fysiskt
+      const bottomCount = Math.min(count > 4 ? count - 4 : 0, MAX_BOTTOM);
+      const remaining = count - bottomCount;
+      const sideCountLeft = Math.ceil(remaining / 2);
+      const sideCountRight = Math.floor(remaining / 2);
+
+      const GAP = 85; // Alltid perfekt läsbart avstånd
       const leftX = 70;
       const rightX = CANVAS_WIDTH - 70;
 
-      const availableHeight = CANVAS_HEIGHT - START_Y - PADDING_BOTTOM;
-      let gapY = availableHeight / Math.max(1, sideCount - 1);
-      gapY = Math.max(MIN_GAP, gapY); 
-      
-      for (let i = 0; i < sideCount; i++) {
-        newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.SINGLE, x: leftX, y: START_Y + i * gapY, capacity: 1, students: [], rotation: 90 });
-        newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.SINGLE, x: rightX, y: START_Y + i * gapY, capacity: 1, students: [], rotation: -90 });
+      // Bygg Vänster vägg
+      for (let i = 0; i < sideCountLeft; i++) {
+        newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.SINGLE, x: leftX, y: START_Y + i * GAP, capacity: 1, students: [], rotation: 90 });
       }
-      
-      const bottomY = START_Y + (sideCount > 0 ? sideCount - 1 : 0) * gapY + 80;
-      const bottomStartX = leftX + 70;
-      const bottomEndX = rightX - 70;
-      let gapX = (bottomEndX - bottomStartX) / Math.max(1, bottomCount - 1);
-      
-      let actualBottomStartX = bottomStartX;
-      if (gapX < MIN_GAP) {
-        gapX = MIN_GAP;
-        const totalBottomWidth = (bottomCount - 1) * gapX;
-        actualBottomStartX = (CANVAS_WIDTH - totalBottomWidth) / 2;
+      // Bygg Höger vägg
+      for (let i = 0; i < sideCountRight; i++) {
+        newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.SINGLE, x: rightX, y: START_Y + i * GAP, capacity: 1, students: [], rotation: -90 });
       }
-      
+
+      // Bygg Bottenraden (Den hamnar alltid exakt under den längsta sidoväggen och centreras!)
+      const bottomY = START_Y + Math.max(sideCountLeft - 1, sideCountRight - 1, 0) * GAP + 90;
+      const totalBottomWidth = Math.max(0, bottomCount - 1) * GAP;
+      const bottomStartX = (CANVAS_WIDTH - totalBottomWidth) / 2;
+
       for (let i = 0; i < bottomCount; i++) {
-        newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.SINGLE, x: actualBottomStartX + i * gapX, y: bottomY, capacity: 1, students: [], rotation: 0 });
+        newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.SINGLE, x: bottomStartX + i * GAP, y: bottomY, capacity: 1, students: [], rotation: 0 });
       }
     }
 
@@ -187,16 +178,14 @@ const LayoutTab = ({ showNotification }) => {
   const alignDesks = () => {
     if (desks.length === 0) return;
 
-    // Sortera först bänkarna uppifrån och ner
     const sortedDesks = [...desks].sort((a, b) => {
       if (Math.abs(a.y - b.y) > 50) return a.y - b.y;
       return a.x - b.x;
     });
 
-    // Mittpunkten av canvasen (i pixlar)
     const CANVAS_CENTER_X = 500; 
     const START_Y = 140;
-    const GAP_Y = 80;
+    const GAP_Y = 80; // Fast avstånd neråt, canvasen växer ju dynamiskt nu!
 
     const getDeskDim = (type) => {
       if (type === DESIGN_BRUSH_TYPES.GROUP_6) return { w: 200, h: 140 };
@@ -210,7 +199,6 @@ const LayoutTab = ({ showNotification }) => {
     const cols = count >= 6 ? 3 : (count >= 4 ? 2 : Math.min(3, count)); 
     const rows = Math.ceil(count / cols);
 
-    // Målbredd för att bänkarna ska breda ut sig snyggt
     const TARGET_ROW_WIDTH = 850;
 
     const newDesks = sortedDesks.map((desk, index) => {
@@ -220,15 +208,12 @@ const LayoutTab = ({ showNotification }) => {
 
       const desksInThisRow = (r === rows - 1 && count % cols !== 0) ? (count % cols) : cols;
       
-      // Räkna ut ett dynamiskt mellanrum (gap) för att sprida ut dem
       let gapX = 40; 
       if (desksInThisRow > 1) {
           gapX = (TARGET_ROW_WIDTH - (desksInThisRow * dim.w)) / (desksInThisRow - 1);
-          // Maxgräns så de inte drar iväg till varsin ände om det bara är 2 bänkar
           gapX = Math.min(gapX, 150);
       }
 
-      // Räkna ut var raden ska börja för att bli exakt centrerad
       const rowTotalWidth = (desksInThisRow * dim.w) + ((desksInThisRow - 1) * gapX);
       const rowStartX = CANVAS_CENTER_X - (rowTotalWidth / 2);
 
@@ -299,7 +284,6 @@ const LayoutTab = ({ showNotification }) => {
               <button onClick={alignDesks} className="px-3 py-2 rounded-lg border text-sm font-semibold bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-gray-200 hover:border-blue-200 transition-all flex items-center gap-1">
                 <AlignCenter size={14} className="inline" /> Centrera
               </button>
-
             </div>
             
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-2 border-t border-purple-200 pt-3 gap-3">
