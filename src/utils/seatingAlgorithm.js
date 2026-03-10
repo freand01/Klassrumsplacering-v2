@@ -1,11 +1,12 @@
 import { ALGORITHM_CONSTANTS } from './constants';
 
 export class SeatingOptimizer {
-  constructor({ students, constraints, desks, lockedDesks, plans }) {
+  constructor({ students, constraints, desks, lockedSeats, plans }) {
     this.students = students;
     this.constraints = constraints;
     this.desks = JSON.parse(JSON.stringify(desks)); 
-    this.lockedDesks = new Set(lockedDesks || []);
+    // Nytt: Vi använder lockedSeats (ex: "deskId-seatIndex")
+    this.lockedSeats = new Set(lockedSeats || []);
     this.plans = plans || [];
     this.analyzeClassroom();
   }
@@ -23,10 +24,8 @@ export class SeatingOptimizer {
     if (minY === Infinity) minY = 0;
 
     const roomWidth = maxX - minX;
-    
-    // Snävare gränser!
-    const wallThreshold = Math.max(150, roomWidth * 0.15); // Bara bänkar väldigt nära kanten
-    const frontThreshold = 80; // MYCKET snävare - bara den absoluta frontraden får godkänt
+    const wallThreshold = Math.max(150, roomWidth * 0.15); 
+    const frontThreshold = 80; 
 
     this.frontSeatIds = new Set();
     this.wallSeatIds = new Set();
@@ -38,16 +37,12 @@ export class SeatingOptimizer {
       for (let i = 0; i < desk.capacity; i++) {
         const seatKey = `${desk.id}-${i}`;
 
-        // Längst fram?
         if (desk.y <= minY + frontThreshold) {
           this.frontSeatIds.add(seatKey);
         }
-
-        // Vid vänster vägg? (Måste vara bänken vid väggen OCH den vänstra stolen, index 0)
         if (desk.x <= minX + wallThreshold && i === 0) {
           this.wallSeatIds.add(seatKey);
         }
-        // Vid höger vägg? (Måste vara bänken vid väggen OCH den högra stolen, sista indexet)
         else if ((desk.x + desk.width) >= maxX - wallThreshold && i === desk.capacity - 1) {
           this.wallSeatIds.add(seatKey);
         }
@@ -57,11 +52,15 @@ export class SeatingOptimizer {
     this.flatSeats = [];
     this.desks.forEach(desk => {
       for (let i = 0; i < desk.capacity; i++) {
+        const seatKey = `${desk.id}-${i}`;
+        const isSeatLocked = this.lockedSeats.has(seatKey);
+        
         this.flatSeats.push({
           deskId: desk.id,
           seatIndex: i,
-          isLocked: this.lockedDesks.has(desk.id),
-          student: this.lockedDesks.has(desk.id) && desk.students ? (desk.students[i] || null) : null
+          isLocked: isSeatLocked,
+          // Om stolen är låst, behåll eleven som sitter där, annars töm den
+          student: isSeatLocked && desk.students ? (desk.students[i] || null) : null
         });
       }
     });
@@ -72,6 +71,7 @@ export class SeatingOptimizer {
     let grid = this.flatSeats.map(s => ({ ...s }));
     let pool = [...this.students];
 
+    // Filtrera bort elever som redan sitter på en låst plats
     const lockedIds = new Set(grid.filter(s => s.isLocked && s.student).map(s => s.student.id));
     pool = pool.filter(s => !lockedIds.has(s.id)).sort(() => Math.random() - 0.5);
 
@@ -185,7 +185,6 @@ export class SeatingOptimizer {
       const { student, deskId, seatIndex } = seat;
       const seatKey = `${deskId}-${seatIndex}`;
       
-      // Kollar exakt rätt stol, inte bara bänken!
       if (student.needsFront && !this.frontSeatIds.has(seatKey)) score += 5000;
       if (student.needsWall && !this.wallSeatIds.has(seatKey)) score += 5000;
       

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { PenTool, RefreshCw, Printer, Save, RotateCcw, LayoutTemplate, Users, Magnet, AlignCenter } from 'lucide-react';
+import { PenTool, RefreshCw, Printer, Save, RotateCcw, LayoutTemplate, Users, Magnet, AlignCenter, Circle } from 'lucide-react';
 import Button from '../Button';
 import Input from '../Input';
 import FreePositioningCanvas from '../FreePositioningCanvas';
@@ -19,7 +19,7 @@ const LayoutTab = ({ showNotification }) => {
 
   const [desks, setDesks] = useState([]);
   const [selectedDesk, setSelectedDesk] = useState(null);
-  const [lockedDesks, setLockedDesks] = useState(new Set());
+  const [lockedSeats, setLockedSeats] = useState(new Set());
 
   useEffect(() => { setSelectedDesk(null); }, [currentClassId]);
 
@@ -28,9 +28,9 @@ const LayoutTab = ({ showNotification }) => {
     const active = data.activePlans?.[currentClassId];
     if (active && active.desks) {
       setDesks(active.desks);
-      setLockedDesks(new Set(active.lockedDesks || []));
+      setLockedSeats(new Set(active.lockedSeats || []));
     } else {
-      setDesks([]); setLockedDesks(new Set()); setIsDesignMode(true);
+      setDesks([]); setLockedSeats(new Set()); setIsDesignMode(true);
     }
   }, [currentClassId, data.activePlans]);
 
@@ -39,10 +39,13 @@ const LayoutTab = ({ showNotification }) => {
   }, [dispatch, currentClassId]);
 
   const handleDesksChange = (newDesks) => { setDesks(newDesks); updateActivePlanInState({ desks: newDesks }); };
-  const handleDeskLockToggle = (deskId) => {
-    const newLocked = new Set(lockedDesks);
-    newLocked.has(deskId) ? newLocked.delete(deskId) : newLocked.add(deskId);
-    setLockedDesks(newLocked); updateActivePlanInState({ lockedDesks: Array.from(newLocked) });
+  
+  const handleSeatLockToggle = (deskId, seatIndex) => {
+    const seatKey = `${deskId}-${seatIndex}`;
+    const newLocked = new Set(lockedSeats);
+    newLocked.has(seatKey) ? newLocked.delete(seatKey) : newLocked.add(seatKey);
+    setLockedSeats(newLocked); 
+    updateActivePlanInState({ lockedSeats: Array.from(newLocked) });
   };
 
   const handleDeskSelect = (desk, studentIndex) => {
@@ -83,7 +86,7 @@ const LayoutTab = ({ showNotification }) => {
     setIsGenerating(true);
     setTimeout(() => {
       const optimizer = new SeatingOptimizer({
-        students, constraints: data.constraints.filter(c => c.classId === currentClassId), desks, lockedDesks, plans: data.plans.filter(p => p.classId === currentClassId)
+        students, constraints: data.constraints.filter(c => c.classId === currentClassId), desks, lockedSeats, plans: data.plans.filter(p => p.classId === currentClassId)
       });
       const result = optimizer.generateSeating();
       setDesks(result.desks); updateActivePlanInState({ desks: result.desks });
@@ -106,10 +109,7 @@ const LayoutTab = ({ showNotification }) => {
     if (type === 'rows') {
       const desksNeeded = Math.ceil(count / 2); 
       const cols = desksNeeded >= 12 ? 3 : (desksNeeded >= 8 ? 4 : 2); 
-      
-      const gapX = 220;
-      const gapY = 110; // Alltid snyggt, fast avstånd
-
+      const gapX = 220; const gapY = 110; 
       const totalWidth = (cols - 1) * gapX;
       const startX = (CANVAS_WIDTH - totalWidth) / 2;
 
@@ -118,16 +118,12 @@ const LayoutTab = ({ showNotification }) => {
         const c = i % cols;
         const desksInThisRow = (r === Math.ceil(desksNeeded / cols) - 1 && desksNeeded % cols !== 0) ? (desksNeeded % cols) : cols;
         const rowStartX = startX + ((cols - desksInThisRow) * gapX) / 2;
-
         newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.PAIR, x: rowStartX + c * gapX, y: START_Y + r * gapY, capacity: 2, students: [], rotation: 0 });
       }
     } else if (type === 'islands') {
       const desksNeeded = Math.ceil(count / 4);
       const cols = desksNeeded >= 6 ? 3 : 2; 
-      
-      const gapX = 260;
-      const gapY = 180; // Alltid snyggt, fast avstånd
-
+      const gapX = 260; const gapY = 180; 
       const totalWidth = (cols - 1) * gapX;
       const startX = (CANVAS_WIDTH - totalWidth) / 2;
 
@@ -136,60 +132,73 @@ const LayoutTab = ({ showNotification }) => {
         const c = i % cols;
         const desksInThisRow = (r === Math.ceil(desksNeeded / cols) - 1 && desksNeeded % cols !== 0) ? (desksNeeded % cols) : cols;
         const rowStartX = startX + ((cols - desksInThisRow) * gapX) / 2;
-
         newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.GROUP_4, x: rowStartX + c * gapX, y: START_Y + r * gapY, capacity: 4, students: [], rotation: 0 });
       }
     } else if (type === 'horseshoe') {
-      const MAX_BOTTOM = 7; // Fler får inte plats mellan väggarna rent fysiskt
+      const MAX_BOTTOM = 7; 
       const bottomCount = Math.min(count > 4 ? count - 4 : 0, MAX_BOTTOM);
       const remaining = count - bottomCount;
       const sideCountLeft = Math.ceil(remaining / 2);
       const sideCountRight = Math.floor(remaining / 2);
 
-      const GAP = 85; // Alltid perfekt läsbart avstånd
-      const leftX = 70;
-      const rightX = CANVAS_WIDTH - 70;
+      const GAP = 85; 
+      const leftX = 70; const rightX = CANVAS_WIDTH - 70;
 
-      // Bygg Vänster vägg
-      for (let i = 0; i < sideCountLeft; i++) {
-        newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.SINGLE, x: leftX, y: START_Y + i * GAP, capacity: 1, students: [], rotation: 90 });
-      }
-      // Bygg Höger vägg
-      for (let i = 0; i < sideCountRight; i++) {
-        newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.SINGLE, x: rightX, y: START_Y + i * GAP, capacity: 1, students: [], rotation: -90 });
-      }
+      for (let i = 0; i < sideCountLeft; i++) newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.SINGLE, x: leftX, y: START_Y + i * GAP, capacity: 1, students: [], rotation: 90 });
+      for (let i = 0; i < sideCountRight; i++) newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.SINGLE, x: rightX, y: START_Y + i * GAP, capacity: 1, students: [], rotation: -90 });
 
-      // Bygg Bottenraden (Den hamnar alltid exakt under den längsta sidoväggen och centreras!)
       const bottomY = START_Y + Math.max(sideCountLeft - 1, sideCountRight - 1, 0) * GAP + 90;
       const totalBottomWidth = Math.max(0, bottomCount - 1) * GAP;
       const bottomStartX = (CANVAS_WIDTH - totalBottomWidth) / 2;
 
-      for (let i = 0; i < bottomCount; i++) {
-        newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.SINGLE, x: bottomStartX + i * GAP, y: bottomY, capacity: 1, students: [], rotation: 0 });
+      for (let i = 0; i < bottomCount; i++) newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.SINGLE, x: bottomStartX + i * GAP, y: bottomY, capacity: 1, students: [], rotation: 0 });
+    } else if (type === 'circle') {
+      const GAP_BETWEEN_DESKS = 95; 
+      const circumference = count * GAP_BETWEEN_DESKS;
+      const radius = Math.max(160, circumference / (2 * Math.PI));
+      const CANVAS_CENTER_X = Math.max(450, radius + 100); 
+      const centerY = START_Y + radius + 40; 
+
+      for (let i = 0; i < count; i++) {
+        const angle = (i / count) * 2 * Math.PI - (Math.PI / 2); 
+        const x = CANVAS_CENTER_X + radius * Math.cos(angle) - 40; 
+        const y = centerY + radius * Math.sin(angle) - 30; 
+        const rotation = (angle * 180 / Math.PI) - 90;
+
+        newDesks.push({ 
+          id: deskId++, 
+          type: DESIGN_BRUSH_TYPES.SINGLE, 
+          x: x, 
+          y: y, 
+          capacity: 1, 
+          students: [], 
+          rotation: Math.round(rotation) 
+        });
       }
     }
 
     setDesks(newDesks);
     updateActivePlanInState({ desks: newDesks });
-    setLockedDesks(new Set());
-    showNotification(`${type === 'rows' ? 'Rader' : type === 'islands' ? 'Gruppöar' : 'Hästsko'} skapad för ${count} elever!`, 'success');
+    setLockedSeats(new Set());
+    
+    const typeName = type === 'rows' ? 'Rader' : type === 'islands' ? 'Gruppöar' : type === 'horseshoe' ? 'Hästsko' : 'Ring';
+    showNotification(`${typeName} skapad för ${count} elever!`, 'success');
   };
 
   const alignDesks = () => {
     if (desks.length === 0) return;
-
     const sortedDesks = [...desks].sort((a, b) => {
       if (Math.abs(a.y - b.y) > 50) return a.y - b.y;
       return a.x - b.x;
     });
 
     const CANVAS_CENTER_X = 500; 
-    const START_Y = 140;
-    const GAP_Y = 80; // Fast avstånd neråt, canvasen växer ju dynamiskt nu!
+    const START_Y = 140; const GAP_Y = 80; 
 
+    // HÄR ÄR FIXEN FÖR CENTRERINGS-FUNKTIONEN
     const getDeskDim = (type) => {
       if (type === DESIGN_BRUSH_TYPES.GROUP_6) return { w: 200, h: 140 };
-      if (type === DESIGN_BRUSH_TYPES.GROUP_5) return { w: 150, h: 150 };
+      if (type === DESIGN_BRUSH_TYPES.GROUP_5) return { w: 200, h: 140 }; // Tidigare 150x150, nu 200x140
       if (type === DESIGN_BRUSH_TYPES.GROUP_4) return { w: 160, h: 120 };
       if (type === DESIGN_BRUSH_TYPES.PAIR) return { w: 160, h: 60 };
       return { w: 80, h: 60 }; 
@@ -198,14 +207,12 @@ const LayoutTab = ({ showNotification }) => {
     const count = sortedDesks.length;
     const cols = count >= 6 ? 3 : (count >= 4 ? 2 : Math.min(3, count)); 
     const rows = Math.ceil(count / cols);
-
     const TARGET_ROW_WIDTH = 850;
 
     const newDesks = sortedDesks.map((desk, index) => {
       const r = Math.floor(index / cols);
       const c = index % cols;
       const dim = getDeskDim(desk.type);
-
       const desksInThisRow = (r === rows - 1 && count % cols !== 0) ? (count % cols) : cols;
       
       let gapX = 40; 
@@ -213,16 +220,10 @@ const LayoutTab = ({ showNotification }) => {
           gapX = (TARGET_ROW_WIDTH - (desksInThisRow * dim.w)) / (desksInThisRow - 1);
           gapX = Math.min(gapX, 150);
       }
-
       const rowTotalWidth = (desksInThisRow * dim.w) + ((desksInThisRow - 1) * gapX);
       const rowStartX = CANVAS_CENTER_X - (rowTotalWidth / 2);
 
-      return {
-        ...desk,
-        x: rowStartX + c * (dim.w + gapX),
-        y: START_Y + r * (dim.h + GAP_Y),
-        rotation: 0 
-      };
+      return { ...desk, x: rowStartX + c * (dim.w + gapX), y: START_Y + r * (dim.h + GAP_Y), rotation: 0 };
     });
 
     setDesks(newDesks);
@@ -265,6 +266,9 @@ const LayoutTab = ({ showNotification }) => {
                 <button onClick={() => generateAutoLayout('horseshoe')} className="px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all border border-amber-200">
                   <Magnet size={16} className="rotate-180" /> Hästsko
                 </button>
+                <button onClick={() => generateAutoLayout('circle')} className="px-3 py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all border border-teal-200">
+                  <Circle size={16} /> Cirkel i ring
+                </button>
               </div>
             </div>
 
@@ -289,7 +293,7 @@ const LayoutTab = ({ showNotification }) => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-2 border-t border-purple-200 pt-3 gap-3">
               <div className="flex flex-wrap gap-2 items-center w-full sm:w-auto">
                 <span className="text-xs font-bold text-purple-900 uppercase">Egna mallar:</span>
-                <select className="p-2 text-sm border rounded-lg bg-white" onChange={(e) => { if (e.target.value) { const t = data.roomLayouts.find(l => l.id === e.target.value); if(t) { setDesks(t.desks); setLockedDesks(new Set()); updateActivePlanInState({desks: t.desks}); showNotification('Mall laddad', 'success'); } } }} value=""><option value="" disabled>Ladda sparad mall...</option>{data.roomLayouts.filter(l => l.classId === currentClassId).map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select>
+                <select className="p-2 text-sm border rounded-lg bg-white" onChange={(e) => { if (e.target.value) { const t = data.roomLayouts.find(l => l.id === e.target.value); if(t) { setDesks(t.desks); setLockedSeats(new Set()); updateActivePlanInState({desks: t.desks}); showNotification('Mall laddad', 'success'); } } }} value=""><option value="" disabled>Ladda sparad mall...</option>{data.roomLayouts.filter(l => l.classId === currentClassId).map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select>
                 <input type="text" placeholder="Namn på ny mall..." className="p-2 text-sm border rounded-lg w-32" value={layoutName} onChange={e => setLayoutName(e.target.value)} />
                 <Button variant="primary" className="text-sm py-1.5" disabled={!layoutName.trim() || desks.length === 0} onClick={() => { dispatch({type: ACTIONS.SAVE_ROOM_LAYOUT, payload: {id: crypto.randomUUID(), classId: currentClassId, name: layoutName, desks: desks.map(d => ({...d, students: []}))}}); setLayoutName(''); showNotification('Mall sparad', 'success'); }}>Spara</Button>
               </div>
@@ -299,7 +303,7 @@ const LayoutTab = ({ showNotification }) => {
         )}
       </div>
 
-      <FreePositioningCanvas isDesignMode={isDesignMode} currentBrush={designBrush} desks={desks} onDesksChange={handleDesksChange} lockedDesks={lockedDesks} onToggleLock={handleDeskLockToggle} selectedDesk={selectedDesk} onDeskSelect={handleDeskSelect} />
+      <FreePositioningCanvas isDesignMode={isDesignMode} currentBrush={designBrush} desks={desks} onDesksChange={handleDesksChange} lockedSeats={lockedSeats} onToggleLock={handleSeatLockToggle} selectedDesk={selectedDesk} onDeskSelect={handleDeskSelect} />
 
       {!isDesignMode && desks.length > 0 && (
         <div className="mt-8 flex gap-4 justify-center items-end bg-white p-4 rounded-xl border print:hidden shadow-sm">
@@ -307,7 +311,7 @@ const LayoutTab = ({ showNotification }) => {
             <label className="text-xs text-gray-500 font-bold ml-1 uppercase">Spara placering i historik:</label>
             <Input placeholder="T.ex. Vecka 42..." value={planName} onChange={e => setPlanName(e.target.value)} />
           </div>
-          <Button variant="secondary" onClick={() => { dispatch({type: ACTIONS.SAVE_PLAN, payload: {id: crypto.randomUUID(), classId: currentClassId, name: planName || `Placering ${new Date().toLocaleDateString('sv-SE')}`, desks, lockedDesks: Array.from(lockedDesks), createdAt: Date.now()}}); setPlanName(''); showNotification('Sparad i historik', 'success'); }}><Save size={18} /> Spara i historik</Button>
+          <Button variant="secondary" onClick={() => { dispatch({type: ACTIONS.SAVE_PLAN, payload: {id: crypto.randomUUID(), classId: currentClassId, name: planName || `Placering ${new Date().toLocaleDateString('sv-SE')}`, desks, lockedSeats: Array.from(lockedSeats), createdAt: Date.now()}}); setPlanName(''); showNotification('Sparad i historik', 'success'); }}><Save size={18} /> Spara i historik</Button>
         </div>
       )}
     </div>
