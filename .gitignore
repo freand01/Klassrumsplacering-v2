@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Byggda Electron-filer (Detta är det nya tillägget!)
+release/
+release
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

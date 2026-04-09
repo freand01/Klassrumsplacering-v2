@@ -4,7 +4,7 @@ import Button from './Button';
 import Input from './Input';
 import { useApp, ACTIONS } from '../contexts/AppContext';
 
-const ClassSelector = ({ showNotification }) => {
+const ClassSelector = ({ showNotification, onClassSelect }) => {
   const { state, dispatch } = useApp();
   const { data, currentClassId } = state;
   const [newClassName, setNewClassName] = useState('');
@@ -20,7 +20,8 @@ const ClassSelector = ({ showNotification }) => {
       createdAt: Date.now()
     };
     dispatch({ type: ACTIONS.ADD_CLASS, payload: newClass });
-    dispatch({ type: ACTIONS.SET_CURRENT_CLASS_ID, payload: newClass.id });
+    // Triggar vår navigationshanterare i App.jsx
+    onClassSelect(newClass.id);
     setNewClassName('');
     showNotification('Klass skapad!', 'success');
   };
@@ -35,7 +36,7 @@ const ClassSelector = ({ showNotification }) => {
           {data.classes.map(c => (
             <button
               key={c.id}
-              onClick={() => dispatch({ type: ACTIONS.SET_CURRENT_CLASS_ID, payload: c.id })}
+              onClick={() => onClassSelect(c.id)}
               className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 whitespace-nowrap ${
                 currentClassId === c.id
                   ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30 scale-105'

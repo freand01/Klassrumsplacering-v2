@@ -7,7 +7,15 @@ import { useApp, ACTIONS } from '../../contexts/AppContext';
 import { DESIGN_BRUSH_TYPES } from '../../utils/constants';
 import { SeatingOptimizer } from '../../utils/seatingAlgorithm';
 
-const LayoutTab = ({ showNotification }) => {
+const getWeekNumber = () => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+  const week1 = new Date(d.getFullYear(), 0, 4);
+  return 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+};
+
+const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
   const { state, dispatch } = useApp();
   const { data, currentClassId } = state;
 
@@ -21,8 +29,16 @@ const LayoutTab = ({ showNotification }) => {
   const [selectedDesk, setSelectedDesk] = useState(null);
   const [lockedSeats, setLockedSeats] = useState(new Set());
 
-  useEffect(() => { setSelectedDesk(null); }, [currentClassId]);
+  // --- FIXEN ÄR HÄR NEDANFÖR ---
+  // Vi delar upp laddningen i två steg så att varningen inte nollställs i smyg
 
+  // 1. Körs BARA när vi byter klass (då nollställer vi allt och tar bort varningen)
+  useEffect(() => { 
+    setSelectedDesk(null); 
+    setHasUnsavedChanges(false);
+  }, [currentClassId, setHasUnsavedChanges]);
+
+  // 2. Synkroniserar ritbordet (Utan att ändra varnings-flaggan!)
   useEffect(() => {
     if (!currentClassId) return;
     const active = data.activePlans?.[currentClassId];
@@ -34,11 +50,17 @@ const LayoutTab = ({ showNotification }) => {
     }
   }, [currentClassId, data.activePlans]);
 
+  // -----------------------------
+
   const updateActivePlanInState = useCallback((updates) => {
     dispatch({ type: ACTIONS.UPDATE_ACTIVE_PLAN, payload: { classId: currentClassId, updates } });
   }, [dispatch, currentClassId]);
 
-  const handleDesksChange = (newDesks) => { setDesks(newDesks); updateActivePlanInState({ desks: newDesks }); };
+  const handleDesksChange = (newDesks) => { 
+    setDesks(newDesks); 
+    updateActivePlanInState({ desks: newDesks }); 
+    setHasUnsavedChanges(true); // Flagga för ändring
+  };
   
   const handleSeatLockToggle = (deskId, seatIndex) => {
     const seatKey = `${deskId}-${seatIndex}`;
@@ -46,6 +68,7 @@ const LayoutTab = ({ showNotification }) => {
     newLocked.has(seatKey) ? newLocked.delete(seatKey) : newLocked.add(seatKey);
     setLockedSeats(newLocked); 
     updateActivePlanInState({ lockedSeats: Array.from(newLocked) });
+    setHasUnsavedChanges(true); // Flagga för ändring
   };
 
   const handleDeskSelect = (desk, studentIndex) => {
@@ -74,6 +97,7 @@ const LayoutTab = ({ showNotification }) => {
         return d;
       });
       setDesks(newDesks); setSelectedDesk(null); updateActivePlanInState({ desks: newDesks });
+      setHasUnsavedChanges(true); // Flagga för elevbyte!
       showNotification(`${s1.name} och ${s2.name} bytte plats`, 'success');
     }
   };
@@ -89,8 +113,30 @@ const LayoutTab = ({ showNotification }) => {
         students, constraints: data.constraints.filter(c => c.classId === currentClassId), desks, lockedSeats, plans: data.plans.filter(p => p.classId === currentClassId)
       });
       const result = optimizer.generateSeating();
-      setDesks(result.desks); updateActivePlanInState({ desks: result.desks });
-      setIsGenerating(false); showNotification('Klass placerad', 'success');
+      
+      setDesks(result.desks); 
+      updateActivePlanInState({ desks: result.desks });
+
+      const currentClass = data.classes?.find(c => c.id === currentClassId);
+      const className = currentClass ? currentClass.name : 'Okänd klass';
+      const timeStr = new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+      const autoPlanName = `${className} v.${getWeekNumber()} (${timeStr})`;
+
+      dispatch({
+        type: ACTIONS.SAVE_PLAN,
+        payload: {
+          id: crypto.randomUUID(),
+          classId: currentClassId,
+          name: autoPlanName,
+          desks: result.desks,
+          lockedSeats: Array.from(lockedSeats),
+          createdAt: Date.now()
+        }
+      });
+
+      setHasUnsavedChanges(false); 
+      setIsGenerating(false); 
+      showNotification(`Placerad och sparad i historiken som "${autoPlanName}"`, 'success');
     }, 100);
   };
 
@@ -180,6 +226,7 @@ const LayoutTab = ({ showNotification }) => {
     setDesks(newDesks);
     updateActivePlanInState({ desks: newDesks });
     setLockedSeats(new Set());
+    setHasUnsavedChanges(true); 
     
     const typeName = type === 'rows' ? 'Rader' : type === 'islands' ? 'Gruppöar' : type === 'horseshoe' ? 'Hästsko' : 'Ring';
     showNotification(`${typeName} skapad för ${count} elever!`, 'success');
@@ -195,10 +242,9 @@ const LayoutTab = ({ showNotification }) => {
     const CANVAS_CENTER_X = 500; 
     const START_Y = 140; const GAP_Y = 80; 
 
-    // HÄR ÄR FIXEN FÖR CENTRERINGS-FUNKTIONEN
     const getDeskDim = (type) => {
       if (type === DESIGN_BRUSH_TYPES.GROUP_6) return { w: 200, h: 140 };
-      if (type === DESIGN_BRUSH_TYPES.GROUP_5) return { w: 200, h: 140 }; // Tidigare 150x150, nu 200x140
+      if (type === DESIGN_BRUSH_TYPES.GROUP_5) return { w: 200, h: 140 }; 
       if (type === DESIGN_BRUSH_TYPES.GROUP_4) return { w: 160, h: 120 };
       if (type === DESIGN_BRUSH_TYPES.PAIR) return { w: 160, h: 60 };
       return { w: 80, h: 60 }; 
@@ -228,10 +274,14 @@ const LayoutTab = ({ showNotification }) => {
 
     setDesks(newDesks);
     updateActivePlanInState({ desks: newDesks });
+    setHasUnsavedChanges(true); 
     showNotification('Bänkarna har städats upp och centrerats!', 'success');
   };
 
   const studentCount = data.students.filter(s => s.classId === currentClassId).length;
+  
+  const currentClass = data.classes?.find(c => c.id === currentClassId);
+  const className = currentClass ? currentClass.name : 'Klassen';
 
   if (!currentClassId) return null;
 
@@ -308,10 +358,16 @@ const LayoutTab = ({ showNotification }) => {
       {!isDesignMode && desks.length > 0 && (
         <div className="mt-8 flex gap-4 justify-center items-end bg-white p-4 rounded-xl border print:hidden shadow-sm">
           <div className="flex-grow max-w-xs">
-            <label className="text-xs text-gray-500 font-bold ml-1 uppercase">Spara placering i historik:</label>
-            <Input placeholder="T.ex. Vecka 42..." value={planName} onChange={e => setPlanName(e.target.value)} />
+            <label className="text-xs text-gray-500 font-bold ml-1 uppercase">Spara justerad placering:</label>
+            <Input placeholder={`T.ex. ${className} v.${getWeekNumber()} (Justerad)`} value={planName} onChange={e => setPlanName(e.target.value)} />
           </div>
-          <Button variant="secondary" onClick={() => { dispatch({type: ACTIONS.SAVE_PLAN, payload: {id: crypto.randomUUID(), classId: currentClassId, name: planName || `Placering ${new Date().toLocaleDateString('sv-SE')}`, desks, lockedSeats: Array.from(lockedSeats), createdAt: Date.now()}}); setPlanName(''); showNotification('Sparad i historik', 'success'); }}><Save size={18} /> Spara i historik</Button>
+          <Button variant="secondary" onClick={() => { 
+            const finalName = planName || `${className} v.${getWeekNumber()} (Justerad)`;
+            dispatch({type: ACTIONS.SAVE_PLAN, payload: {id: crypto.randomUUID(), classId: currentClassId, name: finalName, desks, lockedSeats: Array.from(lockedSeats), createdAt: Date.now()}}); 
+            setPlanName(''); 
+            setHasUnsavedChanges(false); 
+            showNotification('Sparad i historik', 'success'); 
+          }}><Save size={18} /> Spara i historik</Button>
         </div>
       )}
     </div>
