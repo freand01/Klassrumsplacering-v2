@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { LayoutGrid, FileJson, FolderOpen, Users, Settings, MapPin, History, Sparkles, Save } from 'lucide-react';
 import { AppProvider, useApp, ACTIONS } from './contexts/AppContext';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -17,7 +17,6 @@ import HistoryTab from './components/tabs/HistoryTab';
 import { TAB_IDS } from './utils/constants';
 import './styles/modern.css';
 
-// Hjälpfunktion för veckonummer
 const getWeekNumber = () => {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
@@ -39,6 +38,37 @@ const AppContent = () => {
   
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
+
+  // --- NYTT: Logik för att varna vid stängning av programmet ---
+  const [hasUnsavedFileChanges, setHasUnsavedFileChanges] = useState(false);
+  const isFirstRender = useRef(true);
+  const skipNextDirtyCheck = useRef(false);
+
+  // 1. Känn av varje gång databasen ändras (något har lagts till/tagits bort)
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (skipNextDirtyCheck.current) {
+      skipNextDirtyCheck.current = false;
+      return;
+    }
+    setHasUnsavedFileChanges(true); // Nu är programmet "smutsigt" (osparat)
+  }, [data]);
+
+  // 2. Lyssna efter att användaren klickar på krysset för att stänga appen
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedFileChanges) {
+        e.preventDefault();
+        e.returnValue = ''; // Triggar systemets standardvarning för osparade ändringar
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedFileChanges]);
+  // -------------------------------------------------------------
 
   const updateStudent = (id, updates) => {
     dispatch({ type: ACTIONS.UPDATE_STUDENT, payload: { id, updates } });
@@ -88,10 +118,12 @@ const AppContent = () => {
         setConfirmDialog({
           message: `Ladda in projekt från "${file.name}"? Nuvarande osparad data ersätts.`,
           onConfirm: () => {
+            skipNextDirtyCheck.current = true; // Säg till appen att laddningen inte är en "ny ändring"
             dispatch({ type: ACTIONS.SET_DATA, payload: imported });
             if (imported.classes.length > 0) dispatch({ type: ACTIONS.SET_CURRENT_CLASS_ID, payload: imported.classes[0].id });
             setFileHandle(handle); 
             setHasUnsavedChanges(false);
+            setHasUnsavedFileChanges(false); // Nollställ fil-varningen
             showSuccess(`Projektet "${file.name}" laddades in`); 
             setConfirmDialog(null);
           },
@@ -108,6 +140,7 @@ const AppContent = () => {
       const writable = await handle.createWritable();
       await writable.write(JSON.stringify(data, null, 2));
       await writable.close();
+      setHasUnsavedFileChanges(false); // Nollställ varningen när vi sparat
       showSuccess('Projektet har sparats!');
     } catch (error) {
       showError('Kunde inte skriva till filen. Saknar rättigheter?');
@@ -226,9 +259,11 @@ const AppContent = () => {
               <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm"><LayoutGrid className="text-white" size={24} /></div>
               <div>
                 <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">Klassrumsplacering <Sparkles className="text-yellow-300" size={18} /></h1>
-                <p className="text-xs text-white/80">
-                  {/* Ändrat texten här under! */}
+                
+                {/* NYTT: En liten gul stjärna (*) syns om man har osparade ändringar */}
+                <p className="text-xs text-white/80 flex items-center gap-1 font-medium">
                   {fileHandle ? `Öppen fil: ${fileHandle.name}` : 'Modern placering i klassrummet'}
+                  {hasUnsavedFileChanges && <span className="text-yellow-300 font-bold text-sm" title="Osparade ändringar">*</span>}
                 </p>
               </div>
             </div>
@@ -237,8 +272,10 @@ const AppContent = () => {
               <Button variant="outline" className="text-sm border-2 border-white/30 bg-white/20 text-white hover:bg-white/30 hover:border-white/50" onClick={handleOpenFile}>
                 <FolderOpen size={16} /> Öppna
               </Button>
-              <Button variant="outline" className="text-sm border-2 border-white/30 bg-white/20 text-white hover:bg-white/30 hover:border-white/50" onClick={handleSave}>
+              <Button variant="outline" className="text-sm border-2 border-white/30 bg-white/20 text-white hover:bg-white/30 hover:border-white/50 relative" onClick={handleSave}>
                 <Save size={16} /> Spara
+                {/* Liten röd prick på spara-knappen för extra tydlighet */}
+                {hasUnsavedFileChanges && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-indigo-600"></span>}
               </Button>
               {fileHandle && (
                 <Button variant="outline" className="text-sm border-2 border-white/30 bg-white/20 text-white hover:bg-white/30 hover:border-white/50" onClick={handleSaveAs}>
