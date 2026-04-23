@@ -1,4 +1,4 @@
-export const STORAGE_KEY = 'klassplacering_v2_data'; // Ny nyckel för ren start!
+export const STORAGE_KEY = 'klassplacering_v2_data';
 
 export const ALGORITHM_CONSTANTS = {
   OPTIMIZATION_ITERATIONS: 3000,
@@ -13,6 +13,7 @@ export const ALGORITHM_CONSTANTS = {
 export const DESIGN_BRUSH_TYPES = {
   SINGLE: 'single',
   PAIR: 'pair',
+  TRIPLE: 'triple',
   GROUP_4: 'group4',
   GROUP_5: 'group5',
   GROUP_6: 'group6',

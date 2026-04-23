@@ -1,21 +1,29 @@
-import { ALGORITHM_CONSTANTS } from './constants';
+import { ALGORITHM_CONSTANTS, DESIGN_BRUSH_TYPES } from './constants';
 
 export class SeatingOptimizer {
   constructor({ students, constraints, desks, lockedSeats, plans }) {
     this.students = students;
     this.constraints = constraints;
     this.desks = JSON.parse(JSON.stringify(desks)); 
-    // Nytt: Vi använder lockedSeats (ex: "deskId-seatIndex")
     this.lockedSeats = new Set(lockedSeats || []);
     this.plans = plans || [];
     this.analyzeClassroom();
   }
 
+  // NYTT: Algoritmen behöver veta hur breda bänkarna är för att hitta höger vägg!
+  getDeskWidth(type) {
+    if (type === DESIGN_BRUSH_TYPES?.TRIPLE) return 240;
+    if (type === DESIGN_BRUSH_TYPES?.GROUP_6 || type === DESIGN_BRUSH_TYPES?.GROUP_5) return 200;
+    if (type === DESIGN_BRUSH_TYPES?.PAIR || type === DESIGN_BRUSH_TYPES?.GROUP_4) return 160;
+    return 80; // Singelbänk
+  }
+
   analyzeClassroom() {
     let minX = Infinity, maxX = -Infinity, minY = Infinity;
     this.desks.forEach(desk => {
+      const width = this.getDeskWidth(desk.type); // <-- Räknar nu med rätt bredd
       if (desk.x < minX) minX = desk.x;
-      if (desk.x + desk.width > maxX) maxX = desk.x + desk.width;
+      if (desk.x + width > maxX) maxX = desk.x + width;
       if (desk.y < minY) minY = desk.y;
     });
 
@@ -32,6 +40,8 @@ export class SeatingOptimizer {
     this.soloDeskIds = new Set();
 
     this.desks.forEach(desk => {
+      const width = this.getDeskWidth(desk.type); // <-- Räknar med rätt bredd här också!
+
       if (desk.capacity === 1) this.soloDeskIds.add(desk.id);
 
       for (let i = 0; i < desk.capacity; i++) {
@@ -40,10 +50,12 @@ export class SeatingOptimizer {
         if (desk.y <= minY + frontThreshold) {
           this.frontSeatIds.add(seatKey);
         }
+        // Identifiera vänster vägg
         if (desk.x <= minX + wallThreshold && i === 0) {
           this.wallSeatIds.add(seatKey);
         }
-        else if ((desk.x + desk.width) >= maxX - wallThreshold && i === desk.capacity - 1) {
+        // Identifiera höger vägg (Nu fungerar det!)
+        else if ((desk.x + width) >= maxX - wallThreshold && i === desk.capacity - 1) {
           this.wallSeatIds.add(seatKey);
         }
       }
@@ -111,6 +123,7 @@ export class SeatingOptimizer {
     const place = (student, criteriaFn = () => true) => {
       const avail = grid.filter(s => !s.isLocked && !s.student && criteriaFn(s));
       if (avail.length > 0) {
+        // Här sker den slumpmässiga dragningen av giltiga platser
         avail[Math.floor(Math.random() * avail.length)].student = student;
         return true;
       }
