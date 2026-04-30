@@ -36,9 +36,12 @@ const DeskItem = ({
           {student ? (
             <>
               <span className="truncate">{student.name}</span>
-              {/* Prickarna har nu print:hidden så de inte skrivs ut! */}
+              {/* Prickarna har print:hidden så de inte skrivs ut! */}
               {student.needsFront && <div className="w-2 h-2 rounded-full bg-yellow-400 absolute top-1 right-1 print:hidden" title="Nära tavlan" />}
               {student.needsWall && <div className="w-2 h-2 rounded-full bg-green-400 absolute top-1 left-1 print:hidden" title="Vid vägg" />}
+              {/* NYTT: Blå prick för "Sitta själv" nere till vänster */}
+              {student.needsSolo && <div className="w-2 h-2 rounded-full bg-blue-400 absolute bottom-1 left-1 print:hidden" title="Sitta själv" />}
+              
               <button className={`absolute bottom-1 right-1 p-0.5 rounded transition-all hover:scale-110 z-10 print:hidden ${isSeatLocked ? 'text-purple-200' : 'text-white/30 hover:text-white/80'}`} onClick={(e) => { e.stopPropagation(); onToggleLock(desk.id, 0); }}>
                 {isSeatLocked ? <Lock size={12} fill="currentColor" /> : <Unlock size={12} />}
               </button>
@@ -65,9 +68,11 @@ const DeskItem = ({
                 <>
                   <span className="truncate px-1 pb-1">
                     {student.name}
-                    {/* Prickarna har nu print:hidden så de inte skrivs ut! */}
+                    {/* Prickarna har print:hidden så de inte skrivs ut! */}
                     {student.needsFront && <span className="text-yellow-400 ml-0.5 print:hidden" title="Nära tavlan">●</span>}
                     {student.needsWall && <span className="text-green-400 ml-0.5 print:hidden" title="Vid vägg">●</span>}
+                    {/* NYTT: Blå prick för "Sitta själv" för flerplats-bänkar */}
+                    {student.needsSolo && <span className="text-blue-400 ml-0.5 print:hidden" title="Sitta själv">●</span>}
                   </span>
                   <button className={`absolute bottom-0.5 right-0.5 p-0.5 rounded transition-all hover:scale-110 z-10 print:hidden ${isSeatLocked ? 'text-purple-200' : 'text-white/30 hover:text-white/80'}`} onClick={(e) => { e.stopPropagation(); onToggleLock(desk.id, idx); }}>
                     {isSeatLocked ? <Lock size={10} fill="currentColor" /> : <Unlock size={10} />}
@@ -212,7 +217,7 @@ const FreePositioningCanvas = ({ isDesignMode, currentBrush, desks = [], onDesks
               students={desk.students || []} 
               isDesignMode={isDesignMode} 
               historyConflictText={historyConflicts[desk.id]}
-              printBw={printBw} // Skickar ner utskriftsläget
+              printBw={printBw} 
             />
           ))}
         </div>

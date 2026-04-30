@@ -23,6 +23,26 @@ const ConstraintsTab = ({ showNotification }) => {
       showNotification('Välj två olika elever', 'warning');
       return;
     }
+
+    // NYTT: Kontrollera om någon av eleverna ska sitta själv innan vi skapar en "Sitta med"-regel
+    if (constraintType === CONSTRAINT_TYPES.PAIR) {
+      const s1 = getStudents().find(s => s.id === constraintStudent1);
+      const s2 = getStudents().find(s => s.id === constraintStudent2);
+      
+      const soloStudents = [];
+      if (s1?.needsSolo) soloStudents.push(s1.name);
+      if (s2?.needsSolo) soloStudents.push(s2.name);
+
+      if (soloStudents.length > 0) {
+        const names = soloStudents.join(' och ');
+        const confirmMsg = `⚠️ Logisk krock!\n\n${names} har inställningen "Ensam" (Ska sitta själv).\nAtt samtidigt tvinga någon att sitta bredvid skapar problem för algoritmen.\n\nVill du ändå spara regeln?`;
+        
+        if (!window.confirm(confirmMsg)) {
+          return; // Avbryt skapandet om användaren klickar Nej
+        }
+      }
+    }
+
     dispatch({
       type: ACTIONS.ADD_CONSTRAINT,
       payload: { id: crypto.randomUUID(), classId: currentClassId, student1: constraintStudent1, student2: constraintStudent2, type: constraintType }

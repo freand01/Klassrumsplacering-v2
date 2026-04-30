@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, dialog } = require('electron');
 const path = require('path');
 
 function createWindow () {
@@ -14,6 +14,25 @@ function createWindow () {
 
   // Laddar den färdigbyggda React-appen
   win.loadFile(path.join(__dirname, 'dist', 'index.html'));
+
+  // Lyssna på om webbsidan försöker blockera fönstret från att stängas (osparade ändringar)
+  win.webContents.on('will-prevent-unload', (event) => {
+    const choice = dialog.showMessageBoxSync(win, {
+      type: 'warning',
+      buttons: ['Stäng programmet', 'Avbryt'],
+      title: 'Osparade ändringar',
+      message: 'Du har osparade ändringar.',
+      detail: 'Vill du verkligen stänga programmet? De placeringar du inte har sparat i historiken kommer att gå förlorade.',
+      defaultId: 1, // Standardvalet (Avbryt) om man trycker Enter
+      cancelId: 1   // Vad som händer om man kryssar rutan (Avbryt)
+    });
+
+    const shouldClose = (choice === 0);
+    if (shouldClose) {
+      // Om användaren klickar "Stäng programmet", ignorera blockeringen och stäng ändå!
+      event.preventDefault(); 
+    }
+  });
 }
 
 app.whenReady().then(() => {

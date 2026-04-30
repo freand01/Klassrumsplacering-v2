@@ -13,6 +13,13 @@ const getWeekNumber = () => {
   return 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
 };
 
+const getDeskWidth = (type) => {
+  if (type === DESIGN_BRUSH_TYPES?.TRIPLE) return 240;
+  if (type === DESIGN_BRUSH_TYPES?.GROUP_6 || type === DESIGN_BRUSH_TYPES?.GROUP_5) return 200;
+  if (type === DESIGN_BRUSH_TYPES?.PAIR || type === DESIGN_BRUSH_TYPES?.GROUP_4) return 160;
+  return 80;
+};
+
 const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
   const { state, dispatch } = useApp();
   const { data, currentClassId } = state;
@@ -27,8 +34,6 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
   const [lockedSeats, setLockedSeats] = useState(new Set());
   const [localUnsaved, setLocalUnsaved] = useState(false);
   const [desksBackup, setDesksBackup] = useState(null);
-  
-  // NYTT: State för att hantera utskriftsläget (Färg vs Svartvit)
   const [printBw, setPrintBw] = useState(true);
 
   const safeDesks = Array.isArray(desks) ? desks : [];
@@ -150,6 +155,42 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
     setLockedSeats(newLocked); updateActivePlanInState({ lockedSeats: Array.from(newLocked) });
   };
 
+  const checkRequirementConflict = (student, targetDesk, seatIdx, allDesks) => {
+    if (!student) return [];
+    const conflicts = [];
+    
+    let minX = Infinity, maxX = -Infinity, minY = Infinity;
+    allDesks.forEach(d => {
+      const w = getDeskWidth(d.type);
+      if (d.x < minX) minX = d.x;
+      if (d.x + w > maxX) maxX = d.x + w;
+      if (d.y < minY) minY = d.y;
+    });
+    const roomWidth = maxX - minX;
+    const wallThreshold = Math.max(150, roomWidth * 0.15);
+    const frontThreshold = 80;
+
+    if (student.needsFront && targetDesk.y > minY + frontThreshold) {
+      conflicts.push(`${student.name} ska sitta längst fram`);
+    }
+
+    const deskW = getDeskWidth(targetDesk.type);
+    const isWall = (targetDesk.x <= minX + wallThreshold && seatIdx === 0) || 
+                   ((targetDesk.x + deskW) >= maxX - wallThreshold && seatIdx === targetDesk.capacity - 1);
+    if (student.needsWall && !isWall) {
+      conflicts.push(`${student.name} ska sitta vid en vägg`);
+    }
+
+    if (student.needsSolo) {
+      const otherStudentsCount = (targetDesk.students || []).filter((s, i) => i !== seatIdx && s !== null).length;
+      if (otherStudentsCount > 0) {
+        conflicts.push(`${student.name} ska sitta själv (men hamnar nu bredvid någon)`);
+      }
+    }
+
+    return conflicts;
+  };
+
   const handleDeskSelect = (desk, studentIndex) => {
     if (isDesignMode || !desk) return;
 
@@ -166,32 +207,7 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
       const s1 = sdObj.students[selectedDesk.studentIndex];
       const s2 = Array.isArray(desk.students) ? desk.students[studentIndex] : null; 
 
-      const willConflictList = [];
-      if (s1 && s1.id) {
-        (Array.isArray(desk.students) ? desk.students : []).forEach((s, idx) => {
-          if (idx !== studentIndex && s && s.id && s.id !== s1.id && pastPairs[s1.id]?.has(s.id)) {
-            willConflictList.push(`${s1.name || '?'} & ${s.name || '?'}`);
-          }
-        });
-      }
-      if (s2 && s2.id) {
-        (Array.isArray(sdObj.students) ? sdObj.students : []).forEach((s, idx) => {
-          if (idx !== selectedDesk.studentIndex && s && s.id && s.id !== s2.id && pastPairs[s2.id]?.has(s.id)) {
-            willConflictList.push(`${s2.name || '?'} & ${s.name || '?'}`);
-          }
-        });
-      }
-
-      const uniqueConflicts = [...new Set(willConflictList)];
-
-      if (uniqueConflicts.length > 0) {
-        if (!window.confirm(`⚠️ Varning!\n\nBytet gör att följande elever hamnar vid samma bänk igen:\n${uniqueConflicts.map(c => '• ' + c).join('\n')}\n\nVill du ändå genomföra bytet?`)) {
-          setSelectedDesk(null);
-          return;
-        }
-      }
-
-      triggerUnsaved(safeDesks);
+      // 1. Bygg nya layouten "i minnet" först för att kunna analysera resultatet av flytten
       const newDesks = safeDesks.map(d => {
         if (!d) return d;
         if (d.id === selectedDesk.deskId && d.id === desk.id) {
@@ -203,7 +219,77 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
         }
         return d;
       });
-      setDesks(newDesks); setSelectedDesk(null); updateActivePlanInState({ desks: newDesks });
+
+      const willConflictList = [];
+      
+      // 2. Kolla historik-krockar
+      if (s1 && s1.id) {
+        (Array.isArray(desk.students) ? desk.students : []).forEach((s, idx) => {
+          if (idx !== studentIndex && s && s.id && s.id !== s1.id && pastPairs[s1.id]?.has(s.id)) {
+            willConflictList.push(`Tidigare grannar: ${s1.name} & ${s.name}`);
+          }
+        });
+      }
+      if (s2 && s2.id) {
+        (Array.isArray(sdObj.students) ? sdObj.students : []).forEach((s, idx) => {
+          if (idx !== selectedDesk.studentIndex && s && s.id && s.id !== s2.id && pastPairs[s2.id]?.has(s.id)) {
+            willConflictList.push(`Tidigare grannar: ${s2.name} & ${s.name}`);
+          }
+        });
+      }
+
+      // 3. Kolla krav-krockar (Vägg, Tavla, Själv)
+      const reqConflicts = [
+        ...checkRequirementConflict(s1, desk, studentIndex, safeDesks),
+        ...checkRequirementConflict(s2, sdObj, selectedDesk.studentIndex, safeDesks)
+      ];
+
+      // 4. NYTT: Kolla aktiva kompisregler (Ska sitta med / Får ej sitta med)
+      const ruleConflicts = [];
+      const activeConstraints = Array.isArray(data?.constraints) ? data.constraints.filter(c => c && c.classId === currentClassId) : [];
+
+      const getDeskIdForStudent = (studentId) => {
+        for (const d of newDesks) {
+          if (d && Array.isArray(d.students) && d.students.some(s => s && s.id === studentId)) return d.id;
+        }
+        return null;
+      };
+
+      activeConstraints.forEach(c => {
+        // Kolla bara regler som involverar de elever vi just flyttat
+        if ((s1 && (c.student1 === s1.id || c.student2 === s1.id)) ||
+            (s2 && (c.student1 === s2.id || c.student2 === s2.id))) {
+          
+          const desk1 = getDeskIdForStudent(c.student1);
+          const desk2 = getDeskIdForStudent(c.student2);
+
+          // Om båda eleverna finns utplacerade i rummet...
+          if (desk1 !== null && desk2 !== null) {
+            const studentObj1 = Array.isArray(data?.students) ? data.students.find(s => s.id === c.student1) : null;
+            const studentObj2 = Array.isArray(data?.students) ? data.students.find(s => s.id === c.student2) : null;
+
+            if (c.type === 'pair' && desk1 !== desk2) {
+              ruleConflicts.push(`Regel bruten: ${studentObj1?.name || '?'} och ${studentObj2?.name || '?'} SKA sitta tillsammans`);
+            } else if (c.type === 'avoid' && desk1 === desk2) {
+              ruleConflicts.push(`Regel bruten: ${studentObj1?.name || '?'} och ${studentObj2?.name || '?'} får EJ sitta tillsammans`);
+            }
+          }
+        }
+      });
+
+      const allWarnings = [...new Set([...willConflictList, ...reqConflicts, ...ruleConflicts])];
+
+      if (allWarnings.length > 0) {
+        if (!window.confirm(`⚠️ Varning vid flytt!\n\n${allWarnings.map(c => '• ' + c).join('\n')}\n\nVill du ändå genomföra flytten?`)) {
+          setSelectedDesk(null);
+          return;
+        }
+      }
+
+      triggerUnsaved(safeDesks);
+      setDesks(newDesks); 
+      setSelectedDesk(null); 
+      updateActivePlanInState({ desks: newDesks });
       if (typeof showNotification === 'function') {
          showNotification(s2 ? `${s1?.name || ''} och ${s2?.name || ''} bytte plats` : `${s1?.name || ''} flyttades`, 'success');
       }
@@ -329,13 +415,10 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
             {!isDesignMode && (
               <>
                 <Button onClick={generateSeating} disabled={isGenerating}>{isGenerating ? '...' : 'Generera'} <RefreshCw size={18} /></Button>
-                
-                {/* NYTT: En kryssruta för att slå av och på svartvit utskrift */}
                 <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => setPrintBw(!printBw)}>
                   <input type="checkbox" id="bwPrint" checked={printBw} onChange={(e) => setPrintBw(e.target.checked)} className="w-4 h-4 text-blue-600 rounded border-gray-300 cursor-pointer pointer-events-none" />
                   <label htmlFor="bwPrint" className="text-sm font-semibold text-gray-700 cursor-pointer pointer-events-none">Svartvit utskrift</label>
                 </div>
-                
                 <Button variant="secondary" onClick={() => window.print()} disabled={safeDesks.length === 0}><Printer size={18} /> Skriv ut</Button>
               </>
             )}
@@ -415,7 +498,7 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
         selectedDesk={selectedDesk} 
         onDeskSelect={handleDeskSelect} 
         historyConflicts={historyConflicts}
-        printBw={printBw} // Skickar utskriftsläget ner till Canvasen
+        printBw={printBw} 
       />
     </div>
   );
