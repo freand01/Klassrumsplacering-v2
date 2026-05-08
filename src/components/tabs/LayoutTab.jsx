@@ -425,6 +425,7 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
               <button onClick={alignDesks} className="px-3 py-2 rounded-lg border text-sm font-semibold bg-white text-gray-700 hover:bg-blue-50 border-gray-200 flex items-center gap-1"><AlignCenter size={14} /> Centrera</button>
             </div>
             
+            {/* HÄR ÄR DEN SAKNADE DELEN TILLBAKA! */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-2 border-t border-purple-200 pt-3 gap-3">
               <div className="flex flex-wrap gap-2 items-center w-full sm:w-auto">
                 <span className="text-xs font-bold text-purple-900 uppercase">Egna mallar:</span>
@@ -434,6 +435,7 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
               </div>
               <button onClick={() => { if(window.confirm('Vill du rensa hela rummet?')) { setDesks([]); updateActivePlanInState({ desks: [] }); if (typeof showNotification === 'function') showNotification('Rensat', 'info'); } }} className="text-xs text-red-600 hover:bg-red-50 p-2 rounded flex items-center font-bold border border-transparent hover:border-red-200 transition-all"><RotateCcw size={14} className="mr-1"/> Rensa rum</button>
             </div>
+
           </div>
         )}
       </div>
