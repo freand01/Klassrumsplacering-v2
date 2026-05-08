@@ -186,7 +186,6 @@ const AppContent = () => {
 
   const saveToFileHandle = async (handle) => {
     try {
-      // Baka in säkerhetsstämpel och kryptera vid sparning
       const exportObj = {
         _security: { createdAt: Date.now() },
         data: data
@@ -248,6 +247,7 @@ const AppContent = () => {
     setPendingAction(null);
   };
 
+  // UPPDATERAD: Nu med stöd för den nya historik-flaggan
   const saveCurrentLayoutToHistory = () => {
     const activePlan = data.activePlans?.[currentClassId];
     if (!activePlan || !activePlan.desks) return;
@@ -265,7 +265,8 @@ const AppContent = () => {
         name: autoPlanName,
         desks: activePlan.desks,
         lockedSeats: activePlan.lockedSeats || [],
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        excludeFromHistory: false // Standard: Spara som vanlig historik
       }
     });
     showNotification(`Sparades i historiken som "${autoPlanName}"`, 'success');
@@ -365,7 +366,7 @@ const AppContent = () => {
 export default function App() {
   const [data, setData] = useLocalStorage({ classes: [], students: [], constraints: [], plans: [], roomLayouts: [], activePlans: {} });
 
-  // NYTT: Självsanerande intern historik vid uppstart
+  // Självsanerande intern historik vid uppstart
   useEffect(() => {
     let needsUpdate = false;
     let newData = { ...data };
