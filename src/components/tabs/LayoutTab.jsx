@@ -366,7 +366,6 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
             {!isDesignMode && (
               <div className="flex items-center gap-4">
                 
-                {/* NYTT: Tydlig on/off-switch för historik */}
                 <div className="flex items-center gap-3 bg-white px-3 py-1.5 rounded-xl border shadow-sm transition-colors border-gray-200">
                   <span className={`text-sm font-bold ${!ignoreHistoryOnGen ? 'text-indigo-600' : 'text-gray-500'}`}>
                     Historik: {!ignoreHistoryOnGen ? 'PÅ' : 'AV'}
@@ -424,6 +423,16 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
               ))}
               <div className="h-6 w-[1px] bg-purple-200 mx-1"></div>
               <button onClick={alignDesks} className="px-3 py-2 rounded-lg border text-sm font-semibold bg-white text-gray-700 hover:bg-blue-50 border-gray-200 flex items-center gap-1"><AlignCenter size={14} /> Centrera</button>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-2 border-t border-purple-200 pt-3 gap-3">
+              <div className="flex flex-wrap gap-2 items-center w-full sm:w-auto">
+                <span className="text-xs font-bold text-purple-900 uppercase">Egna mallar:</span>
+                <select className="p-2 text-sm border rounded-lg bg-white" onChange={(e) => { if (e.target.value) { const t = Array.isArray(data?.roomLayouts) ? data.roomLayouts.find(l => l && l.id === e.target.value) : null; if(t) { setDesks(Array.isArray(t.desks) ? t.desks : []); setLockedSeats(new Set()); updateActivePlanInState({desks: Array.isArray(t.desks) ? t.desks : []}); if (typeof showNotification === 'function') showNotification('Mall laddad', 'success'); } } }} value=""><option value="" disabled>Ladda sparad mall...</option>{Array.isArray(data?.roomLayouts) ? data.roomLayouts.filter(l => l && l.classId === currentClassId).map(l => <option key={l.id} value={l.id}>{l.name}</option>) : null}</select>
+                <input type="text" placeholder="Namn på ny mall..." className="p-2 text-sm border rounded-lg w-32" value={layoutName} onChange={e => setLayoutName(e.target.value)} />
+                <Button variant="primary" className="text-sm py-1.5" disabled={!layoutName.trim() || safeDesks.length === 0} onClick={() => { dispatch({type: ACTIONS.SAVE_ROOM_LAYOUT, payload: {id: crypto.randomUUID(), classId: currentClassId, name: layoutName, desks: safeDesks.map(d => ({...d, students: []}))}}); setLayoutName(''); if (typeof showNotification === 'function') showNotification('Mall sparad', 'success'); }}>Spara</Button>
+              </div>
+              <button onClick={() => { if(window.confirm('Vill du rensa hela rummet?')) { setDesks([]); updateActivePlanInState({ desks: [] }); if (typeof showNotification === 'function') showNotification('Rensat', 'info'); } }} className="text-xs text-red-600 hover:bg-red-50 p-2 rounded flex items-center font-bold border border-transparent hover:border-red-200 transition-all"><RotateCcw size={14} className="mr-1"/> Rensa rum</button>
             </div>
           </div>
         )}
