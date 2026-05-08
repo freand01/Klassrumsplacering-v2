@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { PenTool, RefreshCw, Printer, Save, RotateCcw, LayoutTemplate, Users, Magnet, AlignCenter, Circle, Star } from 'lucide-react';
+import { PenTool, RefreshCw, Printer, Save, RotateCcw, LayoutTemplate, Users, Magnet, AlignCenter, Circle, Star, Square, MoreHorizontal } from 'lucide-react';
 import Button from '../Button';
 import Input from '../Input';
 import FreePositioningCanvas from '../FreePositioningCanvas';
@@ -207,7 +207,6 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
       const s1 = sdObj.students[selectedDesk.studentIndex];
       const s2 = Array.isArray(desk.students) ? desk.students[studentIndex] : null; 
 
-      // 1. Bygg nya layouten "i minnet" först för att kunna analysera resultatet av flytten
       const newDesks = safeDesks.map(d => {
         if (!d) return d;
         if (d.id === selectedDesk.deskId && d.id === desk.id) {
@@ -222,7 +221,6 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
 
       const willConflictList = [];
       
-      // 2. Kolla historik-krockar
       if (s1 && s1.id) {
         (Array.isArray(desk.students) ? desk.students : []).forEach((s, idx) => {
           if (idx !== studentIndex && s && s.id && s.id !== s1.id && pastPairs[s1.id]?.has(s.id)) {
@@ -238,13 +236,11 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
         });
       }
 
-      // 3. Kolla krav-krockar (Vägg, Tavla, Själv)
       const reqConflicts = [
         ...checkRequirementConflict(s1, desk, studentIndex, safeDesks),
         ...checkRequirementConflict(s2, sdObj, selectedDesk.studentIndex, safeDesks)
       ];
 
-      // 4. NYTT: Kolla aktiva kompisregler (Ska sitta med / Får ej sitta med)
       const ruleConflicts = [];
       const activeConstraints = Array.isArray(data?.constraints) ? data.constraints.filter(c => c && c.classId === currentClassId) : [];
 
@@ -256,14 +252,12 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
       };
 
       activeConstraints.forEach(c => {
-        // Kolla bara regler som involverar de elever vi just flyttat
         if ((s1 && (c.student1 === s1.id || c.student2 === s1.id)) ||
             (s2 && (c.student1 === s2.id || c.student2 === s2.id))) {
           
           const desk1 = getDeskIdForStudent(c.student1);
           const desk2 = getDeskIdForStudent(c.student2);
 
-          // Om båda eleverna finns utplacerade i rummet...
           if (desk1 !== null && desk2 !== null) {
             const studentObj1 = Array.isArray(data?.students) ? data.students.find(s => s.id === c.student1) : null;
             const studentObj2 = Array.isArray(data?.students) ? data.students.find(s => s.id === c.student2) : null;
@@ -333,45 +327,82 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
     const count = studentsInClass > 0 ? studentsInClass : 24;
 
     let newDesks = []; let deskId = Date.now();
-    const CANVAS_WIDTH = 800; const START_Y = 120; 
+    
+    // NYTT: Exakt centreringspunkt (500 pixlar) för att matcha Whiteboarden
+    const CENTER_X = 500; 
+    const START_Y = 120; 
 
     if (type === 'rows') {
       const desksNeeded = Math.ceil(count / 2); const cols = desksNeeded >= 12 ? 3 : (desksNeeded >= 8 ? 4 : 2); 
-      const gapX = 220; const gapY = 110; const totalWidth = (cols - 1) * gapX; const startX = (CANVAS_WIDTH - totalWidth) / 2;
+      const gapX = 220; const gapY = 110; const DESK_W = 160;
       for (let i = 0; i < desksNeeded; i++) {
         const r = Math.floor(i / cols); const c = i % cols;
         const desksInThisRow = (r === Math.ceil(desksNeeded / cols) - 1 && desksNeeded % cols !== 0) ? (desksNeeded % cols) : cols;
-        const rowStartX = startX + ((cols - desksInThisRow) * gapX) / 2;
+        const rowWidth = DESK_W + (desksInThisRow - 1) * gapX; 
+        const rowStartX = CENTER_X - (rowWidth / 2);
         newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.PAIR, x: rowStartX + c * gapX, y: START_Y + r * gapY, capacity: 2, students: [], rotation: 0 });
       }
     } else if (type === 'islands') {
       const desksNeeded = Math.ceil(count / 4); const cols = desksNeeded >= 6 ? 3 : 2; 
-      const gapX = 260; const gapY = 180; const totalWidth = (cols - 1) * gapX; const startX = (CANVAS_WIDTH - totalWidth) / 2;
+      const gapX = 260; const gapY = 180; const DESK_W = 160;
       for (let i = 0; i < desksNeeded; i++) {
         const r = Math.floor(i / cols); const c = i % cols;
         const desksInThisRow = (r === Math.ceil(desksNeeded / cols) - 1 && desksNeeded % cols !== 0) ? (desksNeeded % cols) : cols;
-        const rowStartX = startX + ((cols - desksInThisRow) * gapX) / 2;
+        const rowWidth = DESK_W + (desksInThisRow - 1) * gapX; 
+        const rowStartX = CENTER_X - (rowWidth / 2);
         newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.GROUP_4, x: rowStartX + c * gapX, y: START_Y + r * gapY, capacity: 4, students: [], rotation: 0 });
       }
     } else if (type === 'horseshoe') {
       const MAX_BOTTOM = 7; const bottomCount = Math.min(count > 4 ? count - 4 : 0, MAX_BOTTOM);
       const remaining = count - bottomCount; const sideCountLeft = Math.ceil(remaining / 2); const sideCountRight = Math.floor(remaining / 2);
-      const GAP = 85; const leftX = 70; const rightX = CANVAS_WIDTH - 70;
+      const GAP = 85; 
+      const horseWidth = 700;
+      const leftX = CENTER_X - (horseWidth / 2);
+      const rightX = CENTER_X + (horseWidth / 2) - 80; 
       for (let i = 0; i < sideCountLeft; i++) newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.SINGLE, x: leftX, y: START_Y + i * GAP, capacity: 1, students: [], rotation: 90 });
       for (let i = 0; i < sideCountRight; i++) newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.SINGLE, x: rightX, y: START_Y + i * GAP, capacity: 1, students: [], rotation: -90 });
       const bottomY = START_Y + Math.max(sideCountLeft - 1, sideCountRight - 1, 0) * GAP + 90;
-      const totalBottomWidth = Math.max(0, bottomCount - 1) * GAP; const bottomStartX = (CANVAS_WIDTH - totalBottomWidth) / 2;
+      const bottomRowWidth = 80 + Math.max(0, bottomCount - 1) * GAP; 
+      const bottomStartX = CENTER_X - (bottomRowWidth / 2);
       for (let i = 0; i < bottomCount; i++) newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.SINGLE, x: bottomStartX + i * GAP, y: bottomY, capacity: 1, students: [], rotation: 0 });
     } else if (type === 'circle') {
       const GAP_BETWEEN_DESKS = 95; const circumference = count * GAP_BETWEEN_DESKS; const radius = Math.max(160, circumference / (2 * Math.PI));
-      const CANVAS_CENTER_X = Math.max(450, radius + 100); const centerY = START_Y + radius + 40; 
+      const CANVAS_CENTER_X = Math.max(CENTER_X, radius + 60); 
+      const centerY = START_Y + radius + 40; 
       for (let i = 0; i < count; i++) {
-        const angle = (i / count) * 2 * Math.PI - (Math.PI / 2); const x = CANVAS_CENTER_X + radius * Math.cos(angle) - 40; const y = centerY + radius * Math.sin(angle) - 30; const rotation = (angle * 180 / Math.PI) - 90;
+        const angle = (i / count) * 2 * Math.PI - (Math.PI / 2); 
+        const x = CANVAS_CENTER_X + radius * Math.cos(angle) - 40; 
+        const y = centerY + radius * Math.sin(angle) - 30; 
+        const rotation = (angle * 180 / Math.PI) - 90;
         newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.SINGLE, x: x, y: y, capacity: 1, students: [], rotation: Math.round(rotation) });
       }
+    } else if (type === 'singles') {
+      const desksNeeded = count;
+      const cols = count >= 30 ? 6 : (count >= 20 ? 5 : 4);
+      const gapX = 110; const gapY = 100; const DESK_W = 80;
+      for (let i = 0; i < desksNeeded; i++) {
+        const r = Math.floor(i / cols); const c = i % cols;
+        const desksInThisRow = (r === Math.ceil(desksNeeded / cols) - 1 && desksNeeded % cols !== 0) ? (desksNeeded % cols) : cols;
+        const rowWidth = DESK_W + (desksInThisRow - 1) * gapX;
+        const rowStartX = CENTER_X - (rowWidth / 2);
+        newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.SINGLE, x: rowStartX + c * gapX, y: START_Y + r * gapY, capacity: 1, students: [], rotation: 0 });
+      }
+    } else if (type === 'triples') {
+      const desksNeeded = Math.ceil(count / 3);
+      const cols = desksNeeded >= 12 ? 3 : 2;
+      const gapX = 280; const gapY = 110; const DESK_W = 240;
+      for (let i = 0; i < desksNeeded; i++) {
+        const r = Math.floor(i / cols); const c = i % cols;
+        const desksInThisRow = (r === Math.ceil(desksNeeded / cols) - 1 && desksNeeded % cols !== 0) ? (desksNeeded % cols) : cols;
+        const rowWidth = DESK_W + (desksInThisRow - 1) * gapX;
+        const rowStartX = CENTER_X - (rowWidth / 2);
+        newDesks.push({ id: deskId++, type: DESIGN_BRUSH_TYPES.TRIPLE, x: rowStartX + c * gapX, y: START_Y + r * gapY, capacity: 3, students: [], rotation: 0 });
+      }
     }
+    
     setDesks(newDesks); updateActivePlanInState({ desks: newDesks }); setLockedSeats(new Set());
-    const typeName = type === 'rows' ? 'Rader' : type === 'islands' ? 'Gruppöar' : type === 'horseshoe' ? 'Hästsko' : 'Ring';
+    
+    const typeName = type === 'rows' ? 'Rader' : type === 'islands' ? 'Gruppöar' : type === 'horseshoe' ? 'Hästsko' : type === 'circle' ? 'Ring' : type === 'singles' ? 'Singelrader' : 'Trippelrader';
     if (typeof showNotification === 'function') showNotification(`${typeName} skapad för ${count} elever!`, 'success');
   };
 
@@ -379,7 +410,8 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
     if (safeDesks.length === 0) return;
     updateUnsavedChanges(true);
     const sortedDesks = [...safeDesks].sort((a, b) => { if (Math.abs((a?.y || 0) - (b?.y || 0)) > 50) return (a?.y || 0) - (b?.y || 0); return (a?.x || 0) - (b?.x || 0); });
-    const CANVAS_CENTER_X = 500; const START_Y = 140; const GAP_Y = 80; 
+    const CANVAS_CENTER_X = 500; 
+    const START_Y = 140; const GAP_Y = 80; 
     const getDeskDim = (type) => {
       if (type === DESIGN_BRUSH_TYPES.GROUP_6) return { w: 200, h: 140 }; if (type === DESIGN_BRUSH_TYPES.GROUP_5) return { w: 200, h: 140 }; 
       if (type === DESIGN_BRUSH_TYPES.GROUP_4) return { w: 160, h: 120 }; if (type === DESIGN_BRUSH_TYPES.TRIPLE) return { w: 240, h: 60 };
@@ -430,7 +462,9 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
             <div className="bg-white p-3 rounded-lg border border-purple-100 shadow-sm">
               <span className="text-xs font-bold text-purple-900 uppercase block mb-2">Automatiska layouter (För {studentCount || 24} elever):</span>
               <div className="flex flex-wrap gap-2">
+                <button onClick={() => generateAutoLayout('singles')} className="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all border border-slate-200"><Square size={16} /> Singelrader</button>
                 <button onClick={() => generateAutoLayout('rows')} className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all border border-indigo-200"><LayoutTemplate size={16} /> Traditionella rader</button>
+                <button onClick={() => generateAutoLayout('triples')} className="px-3 py-2 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all border border-cyan-200"><MoreHorizontal size={16} /> Trippelrader</button>
                 <button onClick={() => generateAutoLayout('islands')} className="px-3 py-2 bg-pink-50 hover:bg-pink-100 text-pink-700 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all border border-pink-200"><Users size={16} /> Gruppöar (4-grupper)</button>
                 <button onClick={() => generateAutoLayout('horseshoe')} className="px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all border border-amber-200"><Magnet size={16} className="rotate-180" /> Hästsko</button>
                 <button onClick={() => generateAutoLayout('circle')} className="px-3 py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all border border-teal-200"><Circle size={16} /> Cirkel i ring</button>

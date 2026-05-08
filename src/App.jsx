@@ -17,6 +17,32 @@ import HistoryTab from './components/tabs/HistoryTab';
 import { TAB_IDS } from './utils/constants';
 import './styles/modern.css';
 
+// --- SÄKERHET & KRYPTERING ---
+const SECRET_KEY = "KlassPlaceringHemligNyckel2026"; 
+
+const encryptData = (text) => {
+  const encoded = encodeURIComponent(text); 
+  let result = '';
+  for (let i = 0; i < encoded.length; i++) {
+    result += String.fromCharCode(encoded.charCodeAt(i) ^ SECRET_KEY.charCodeAt(i % SECRET_KEY.length));
+  }
+  return btoa(result); 
+};
+
+const decryptData = (encodedText) => {
+  try {
+    const decoded = atob(encodedText);
+    let result = '';
+    for (let i = 0; i < decoded.length; i++) {
+      result += String.fromCharCode(decoded.charCodeAt(i) ^ SECRET_KEY.charCodeAt(i % SECRET_KEY.length));
+    }
+    return decodeURIComponent(result);
+  } catch (e) {
+    return encodedText; // Fallback för gamla okrypterade filer
+  }
+};
+// ------------------------------------
+
 const getWeekNumber = () => {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
@@ -39,12 +65,10 @@ const AppContent = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
 
-  // --- NYTT: Logik för att varna vid stängning av programmet ---
   const [hasUnsavedFileChanges, setHasUnsavedFileChanges] = useState(false);
   const isFirstRender = useRef(true);
   const skipNextDirtyCheck = useRef(false);
 
-  // 1. Känn av varje gång databasen ändras (något har lagts till/tagits bort)
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -54,21 +78,19 @@ const AppContent = () => {
       skipNextDirtyCheck.current = false;
       return;
     }
-    setHasUnsavedFileChanges(true); // Nu är programmet "smutsigt" (osparat)
+    setHasUnsavedFileChanges(true); 
   }, [data]);
 
-  // 2. Lyssna efter att användaren klickar på krysset för att stänga appen
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (hasUnsavedFileChanges) {
         e.preventDefault();
-        e.returnValue = ''; // Triggar systemets standardvarning för osparade ändringar
+        e.returnValue = ''; 
       }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedFileChanges]);
-  // -------------------------------------------------------------
 
   const updateStudent = (id, updates) => {
     dispatch({ type: ACTIONS.UPDATE_STUDENT, payload: { id, updates } });
@@ -112,18 +134,45 @@ const AppContent = () => {
       });
       const file = await handle.getFile();
       const text = await file.text();
-      const imported = JSON.parse(text);
       
-      if (imported.classes) {
+      const decryptedText = decryptData(text);
+      
+      let imported;
+      try {
+        imported = JSON.parse(decryptedText);
+      } catch (error) {
+        showError('Filen är korrupt eller ej giltig.');
+        return;
+      }
+
+      // 12-månaders-kollen för extern fil
+      if (imported._security && imported._security.createdAt) {
+        const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+        if (Date.now() - imported._security.createdAt > ONE_YEAR_MS) {
+          try {
+            const writable = await handle.createWritable();
+            await writable.write(""); 
+            await writable.close();
+          } catch(e) {
+            console.error("Kunde inte skriva över filen", e);
+          }
+          showError('Säkerhetsspärr: Filen är äldre än 12 månader och har raderats från hårddisken.');
+          return;
+        }
+      }
+
+      const finalData = imported.data || imported;
+      
+      if (finalData.classes) {
         setConfirmDialog({
           message: `Ladda in projekt från "${file.name}"? Nuvarande osparad data ersätts.`,
           onConfirm: () => {
-            skipNextDirtyCheck.current = true; // Säg till appen att laddningen inte är en "ny ändring"
-            dispatch({ type: ACTIONS.SET_DATA, payload: imported });
-            if (imported.classes.length > 0) dispatch({ type: ACTIONS.SET_CURRENT_CLASS_ID, payload: imported.classes[0].id });
+            skipNextDirtyCheck.current = true; 
+            dispatch({ type: ACTIONS.SET_DATA, payload: finalData });
+            if (finalData.classes.length > 0) dispatch({ type: ACTIONS.SET_CURRENT_CLASS_ID, payload: finalData.classes[0].id });
             setFileHandle(handle); 
             setHasUnsavedChanges(false);
-            setHasUnsavedFileChanges(false); // Nollställ fil-varningen
+            setHasUnsavedFileChanges(false); 
             showSuccess(`Projektet "${file.name}" laddades in`); 
             setConfirmDialog(null);
           },
@@ -137,11 +186,20 @@ const AppContent = () => {
 
   const saveToFileHandle = async (handle) => {
     try {
+      // Baka in säkerhetsstämpel och kryptera vid sparning
+      const exportObj = {
+        _security: { createdAt: Date.now() },
+        data: data
+      };
+      
+      const jsonStr = JSON.stringify(exportObj);
+      const encryptedData = encryptData(jsonStr);
+
       const writable = await handle.createWritable();
-      await writable.write(JSON.stringify(data, null, 2));
+      await writable.write(encryptedData);
       await writable.close();
-      setHasUnsavedFileChanges(false); // Nollställ varningen när vi sparat
-      showSuccess('Projektet har sparats!');
+      setHasUnsavedFileChanges(false); 
+      showSuccess('Projektet har sparats krypterat!');
     } catch (error) {
       showError('Kunde inte skriva till filen. Saknar rättigheter?');
     }
@@ -259,8 +317,6 @@ const AppContent = () => {
               <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm"><LayoutGrid className="text-white" size={24} /></div>
               <div>
                 <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">Klassrumsplacering <Sparkles className="text-yellow-300" size={18} /></h1>
-                
-                {/* NYTT: En liten gul stjärna (*) syns om man har osparade ändringar */}
                 <p className="text-xs text-white/80 flex items-center gap-1 font-medium">
                   {fileHandle ? `Öppen fil: ${fileHandle.name}` : 'Modern placering i klassrummet'}
                   {hasUnsavedFileChanges && <span className="text-yellow-300 font-bold text-sm" title="Osparade ändringar">*</span>}
@@ -274,7 +330,6 @@ const AppContent = () => {
               </Button>
               <Button variant="outline" className="text-sm border-2 border-white/30 bg-white/20 text-white hover:bg-white/30 hover:border-white/50 relative" onClick={handleSave}>
                 <Save size={16} /> Spara
-                {/* Liten röd prick på spara-knappen för extra tydlighet */}
                 {hasUnsavedFileChanges && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-indigo-600"></span>}
               </Button>
               {fileHandle && (
@@ -310,9 +365,36 @@ const AppContent = () => {
 export default function App() {
   const [data, setData] = useLocalStorage({ classes: [], students: [], constraints: [], plans: [], roomLayouts: [], activePlans: {} });
 
+  // NYTT: Självsanerande intern historik vid uppstart
   useEffect(() => {
-    if (data.classes.length > 0 && !data.currentClassId) setData(prev => ({ ...prev, currentClassId: prev.classes[0].id }));
-  }, [data.classes.length, data.currentClassId, setData]);
+    let needsUpdate = false;
+    let newData = { ...data };
+
+    const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    
+    if (data.plans && data.plans.length > 0) {
+      const validPlans = data.plans.filter(plan => {
+         const age = now - (plan.createdAt || now); 
+         return age <= ONE_YEAR_MS;
+      });
+      
+      if (validPlans.length !== data.plans.length) {
+        newData.plans = validPlans;
+        needsUpdate = true;
+        console.log(`Säkerhetsstädning: Raderade ${data.plans.length - validPlans.length} gamla historik-objekt.`);
+      }
+    }
+
+    if (data.classes && data.classes.length > 0 && !data.currentClassId) {
+      newData.currentClassId = data.classes[0].id;
+      needsUpdate = true;
+    }
+
+    if (needsUpdate) {
+      setData(newData);
+    }
+  }, []); 
 
   return (
     <ErrorBoundary>
