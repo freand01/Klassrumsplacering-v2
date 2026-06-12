@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutGrid, FileJson, FolderOpen, Users, Settings, MapPin, History, Sparkles, Save } from 'lucide-react';
+import { LayoutGrid, FileJson, FolderOpen, Users, Settings, MapPin, History, Sparkles, Save, Moon, Sun } from 'lucide-react';
 import { AppProvider, useApp, ACTIONS } from './contexts/AppContext';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useNotification } from './hooks/useNotification';
@@ -68,6 +68,22 @@ const AppContent = () => {
   const [hasUnsavedFileChanges, setHasUnsavedFileChanges] = useState(false);
   const isFirstRender = useRef(true);
   const skipNextDirtyCheck = useRef(false);
+
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem('kp_theme') || 'dark';
+    } catch {
+      return 'dark';
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('kp_theme', theme);
+    } catch {
+      // ignore
+    }
+  }, [theme]);
 
   useEffect(() => {
     if (isFirstRender.current) {
@@ -280,7 +296,7 @@ const AppContent = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 text-gray-800 font-sans pb-10 print:bg-white print:pb-0">
+    <div data-theme={theme} className="min-h-screen text-text font-sans pb-10 print:bg-white print:pb-0">
       {editingStudent && <EditStudentModal student={editingStudent} onClose={() => setEditingStudent(null)} onSave={updateStudent} />}
       {showPasteModal && <PasteImportModal onClose={() => setShowPasteModal(false)} onImport={handlePasteImport} />}
       {confirmDialog && <ConfirmDialog message={confirmDialog.message} onConfirm={confirmDialog.onConfirm} onCancel={confirmDialog.onCancel} />}
@@ -311,14 +327,14 @@ const AppContent = () => {
         </div>
       )}
 
-      <header className="sticky top-0 z-40 print:hidden backdrop-blur-lg bg-white border-b shadow-sm">
+      <header className={`sticky top-0 z-40 print:hidden bg-bg/95 backdrop-blur-xl shadow-lg isolate ${theme === 'light' ? 'border-b border-border/80' : 'border-b border-white/10'}`}>
         <div className="gradient-header">
           <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row gap-4 items-center justify-between">
             <div className="flex items-center gap-3 w-full md:w-auto">
-              <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm"><LayoutGrid className="text-white" size={24} /></div>
+              <div className={`p-2 rounded-2xl ${theme === 'light' ? 'glass-strong' : 'glass'}`}><LayoutGrid className={theme === 'light' ? 'text-text' : 'text-white'} size={24} /></div>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">Klassrumsplacering <Sparkles className="text-yellow-300" size={18} /></h1>
-                <p className="text-xs text-white/80 flex items-center gap-1 font-medium">
+                <h1 className={`text-2xl font-bold tracking-tight flex items-center gap-2 ${theme === 'light' ? 'text-text' : 'text-white'}`}>Klassrumsplacering <Sparkles className={theme === 'light' ? 'text-warning' : 'text-yellow-300'} size={18} /></h1>
+                <p className={`text-xs flex items-center gap-1 font-medium ${theme === 'light' ? 'text-muted' : 'text-white/80'}`}>
                   {fileHandle ? `Öppen fil: ${fileHandle.name}` : 'Modern placering i klassrummet'}
                   {hasUnsavedFileChanges && <span className="text-yellow-300 font-bold text-sm" title="Osparade ändringar">*</span>}
                 </p>
@@ -326,15 +342,23 @@ const AppContent = () => {
             </div>
             
             <div className="flex gap-2 w-full md:w-auto justify-end">
-              <Button variant="outline" className="text-sm border-2 border-white/30 bg-white/20 text-white hover:bg-white/30 hover:border-white/50" onClick={handleOpenFile}>
+              <Button
+                variant="outline"
+                className={`text-sm ${theme === 'light' ? 'border border-border/80 bg-white/60 text-text hover:bg-white/75' : 'border border-white/20 bg-white/10 text-white hover:bg-white/15'}`}
+                title={theme === 'dark' ? 'Växla till ljust läge' : 'Växla till mörkt läge'}
+                onClick={() => setTheme(t => (t === 'dark' ? 'light' : 'dark'))}
+              >
+                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />} {theme === 'dark' ? 'Ljust' : 'Mörkt'}
+              </Button>
+              <Button variant="outline" className={`text-sm ${theme === 'light' ? 'border border-border/80 bg-white/60 text-text hover:bg-white/75' : 'border border-white/20 bg-white/10 text-white hover:bg-white/15'}`} onClick={handleOpenFile}>
                 <FolderOpen size={16} /> Öppna
               </Button>
-              <Button variant="outline" className="text-sm border-2 border-white/30 bg-white/20 text-white hover:bg-white/30 hover:border-white/50 relative" onClick={handleSave}>
+              <Button variant="outline" className={`text-sm relative ${theme === 'light' ? 'border border-border/80 bg-white/60 text-text hover:bg-white/75' : 'border border-white/20 bg-white/10 text-white hover:bg-white/15'}`} onClick={handleSave}>
                 <Save size={16} /> Spara
-                {hasUnsavedFileChanges && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-indigo-600"></span>}
+                {hasUnsavedFileChanges && <span className={`absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 ${theme === 'light' ? 'border-white' : 'border-white/30'}`}></span>}
               </Button>
               {fileHandle && (
-                <Button variant="outline" className="text-sm border-2 border-white/30 bg-white/20 text-white hover:bg-white/30 hover:border-white/50" onClick={handleSaveAs}>
+                <Button variant="outline" className={`text-sm ${theme === 'light' ? 'border border-border/80 bg-white/60 text-text hover:bg-white/75' : 'border border-white/20 bg-white/10 text-white hover:bg-white/15'}`} onClick={handleSaveAs}>
                   Spara som...
                 </Button>
               )}
@@ -342,14 +366,24 @@ const AppContent = () => {
           </div>
         </div>
 
-        <ClassSelector showNotification={showNotification} onClassSelect={handleClassChange} />
+        <ClassSelector theme={theme} showNotification={showNotification} onClassSelect={handleClassChange} />
 
-        <div className="max-w-6xl mx-auto px-4 flex gap-2 overflow-x-auto py-2">
+        <div className="max-w-6xl mx-auto px-4 py-3">
+          <div className="glass-strong rounded-2xl p-2 flex gap-2 overflow-x-auto">
           {tabs.map((tab) => (
-            <button key={tab.id} onClick={() => handleTabClick(tab.id)} className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' : 'bg-white text-gray-600 hover:bg-indigo-50 border'}`}>
+            <button
+              key={tab.id}
+              onClick={() => handleTabClick(tab.id)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl transition-all whitespace-nowrap border ${
+                activeTab === tab.id
+                  ? `bg-white/12 ${theme === 'light' ? 'text-text border-border/70' : 'text-white border-white/15'} shadow-glow`
+                  : `${theme === 'light' ? 'text-muted border-transparent hover:bg-black/5 hover:text-text' : 'text-white/75 border-transparent hover:bg-white/8 hover:text-white'}`
+              }`}
+            >
               <tab.icon size={18} /> {tab.label}
             </button>
           ))}
+          </div>
         </div>
       </header>
 

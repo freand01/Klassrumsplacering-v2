@@ -21,16 +21,16 @@ const PasteImportModal = ({ onClose, onImport }) => {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 print:hidden animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md border border-gray-100">
-        <h3 className="text-xl font-bold mb-2 flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-          <ClipboardList size={22} className="text-indigo-600" /> Klistra in namn
+      <div className="glass rounded-2xl p-6 w-full max-w-md">
+        <h3 className="text-xl font-bold mb-2 flex items-center gap-2 text-text">
+          <ClipboardList size={22} className="text-primary-2" /> Klistra in namn
         </h3>
-        <p className="text-sm text-gray-600 mb-5">
+        <p className="text-sm text-muted mb-5">
           Klistra in din namnlista här. Separera med ny rad eller kommatecken.
         </p>
 
         <textarea
-          className="w-full h-48 p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 hover:border-gray-300 outline-none resize-none mb-5 font-mono text-sm transition-all duration-200 bg-gray-50 focus:bg-white"
+          className="w-full h-48 p-4 border border-border/60 rounded-xl focus:ring-2 focus:ring-ring/30 focus:border-ring/70 hover:border-border outline-none resize-none mb-5 font-mono text-sm transition-all duration-200 bg-panel/60 text-text placeholder:text-muted/70"
           placeholder={"Anna, Bertil, Cecilia\nDavid\nErika, Fredrik"}
           value={text}
           onChange={e => setText(e.target.value)}

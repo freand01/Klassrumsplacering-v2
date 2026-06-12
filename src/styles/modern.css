@@ -1,92 +1,118 @@
-/* Modern Design System */
-:root {
-  /* Colors - Modern palette */
-  --primary: #6366f1;
-  --primary-dark: #4f46e5;
-  --primary-light: #818cf8;
-  --secondary: #8b5cf6;
-  --accent: #ec4899;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --error: #ef4444;
+/* Rebrand 2026: glass + dark + neon accents */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-  /* Neutrals */
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-300: #d1d5db;
-  --gray-400: #9ca3af;
-  --gray-500: #6b7280;
-  --gray-600: #4b5563;
-  --gray-700: #374151;
-  --gray-800: #1f2937;
-  --gray-900: #111827;
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Core palette (RGB triplets for Tailwind alpha support) */
+  --bg: 8 10 18;           /* #080A12 */
+  --panel: 14 18 32;       /* #0E1220 */
+  --panel-2: 18 23 41;     /* #121729 */
+  --text: 234 238 255;     /* #EAEEFF */
+  --muted: 161 170 196;    /* #A1AAC4 */
+  --border: 68 78 110;     /* #444E6E */
+  --ring: 124 92 255;      /* violet */
+
+  /* Brand */
+  --primary: 124 92 255;   /* #7C5CFF */
+  --primary-2: 0 229 255;  /* #00E5FF */
+  --accent: 255 45 149;    /* #FF2D95 */
+
+  /* Status */
+  --success: 42 209 125;
+  --warning: 255 186 82;
+  --danger: 255 92 122;
+
+  /* Radii */
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.75rem;
 
   /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-
-  /* Transitions */
-  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-
-  /* Border radius */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 12px 30px rgb(0 0 0 / 0.45);
+  --shadow-lg: 0 24px 60px rgb(0 0 0 / 0.55);
+  --shadow-xl: 0 40px 90px rgb(0 0 0 / 0.6);
+  --shadow-glow: 0 0 0 1px rgb(var(--border) / 0.5), 0 0 40px rgb(var(--primary) / 0.18);
 }
 
-/* Global smooth scrolling */
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: 247 248 255;
+  --panel: 255 255 255;
+  --panel-2: 250 251 255;
+  --text: 16 20 34;
+  --muted: 77 87 115;
+  --border: 216 222 242;
+  --ring: 79 70 229;
+  --primary: 79 70 229;
+  --primary-2: 6 182 212;
+  --accent: 236 72 153;
+  --success: 16 185 129;
+  --warning: 245 158 11;
+  --danger: 239 68 68;
+}
+
 html {
   scroll-behavior: smooth;
+  text-rendering: geometricPrecision;
 }
 
-/* Better focus styles */
+body {
+  margin: 0;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  background: radial-gradient(1200px 800px at 20% 10%, rgb(var(--primary) / 0.18), transparent 60%),
+              radial-gradient(900px 600px at 80% 0%, rgb(var(--primary-2) / 0.14), transparent 55%),
+              radial-gradient(800px 700px at 70% 90%, rgb(var(--accent) / 0.12), transparent 55%),
+              rgb(var(--bg));
+  color: rgb(var(--text));
+}
+
 *:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
+  outline: 2px solid rgb(var(--ring));
+  outline-offset: 3px;
+  border-radius: 0.75rem;
 }
 
-/* Smooth transitions for interactive elements */
-button, a, input, select, textarea {
-  transition: all var(--transition-base);
-}
-
-/* Modern card style */
-.modern-card {
-  background: white;
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-md);
-  transition: all var(--transition-base);
-}
-
-.modern-card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
-}
-
-/* Gradient backgrounds */
-.gradient-primary {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-}
-
-.gradient-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-/* Glassmorphism effect */
+/* Glass surfaces */
 .glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: linear-gradient(
+    to bottom right,
+    rgb(var(--panel) / 0.72),
+    rgb(var(--panel-2) / 0.55)
+  );
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgb(var(--border) / 0.55);
+  box-shadow: var(--shadow-glow);
+}
+
+/* Stronger glass for sticky header surfaces */
+.glass-strong {
+  background: linear-gradient(
+    to bottom right,
+    rgb(var(--panel) / 0.92),
+    rgb(var(--panel-2) / 0.82)
+  );
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgb(var(--border) / 0.65);
+  box-shadow: var(--shadow-xl);
+}
+
+/* Subtle app frame used by header */
+.gradient-header {
+  background: linear-gradient(135deg, rgb(var(--primary) / 0.95) 0%, rgb(var(--accent) / 0.55) 55%, rgb(var(--primary-2) / 0.75) 100%);
+}
+
+[data-theme="light"] .gradient-header {
+  background: linear-gradient(
+    135deg,
+    rgb(var(--primary) / 0.78) 0%,
+    rgb(var(--accent) / 0.25) 55%,
+    rgb(var(--primary-2) / 0.55) 100%
+  );
 }
 
 /* Animations */
@@ -288,7 +314,7 @@ button, a, input, select, textarea {
   background: linear-gradient(
     to right,
     transparent,
-    var(--gray-200),
+    rgb(var(--border) / 0.65),
     transparent
   );
   margin: 1.5rem 0;

@@ -3,12 +3,12 @@ import { Lock, Unlock, X, RotateCcw, AlertCircle } from 'lucide-react';
 import { DESIGN_BRUSH_TYPES } from '../utils/constants';
 
 const DESK_TYPES = {
-  [DESIGN_BRUSH_TYPES.SINGLE]: { width: 80, height: 60, capacity: 1, label: 'Singel', color: 'from-blue-500 to-blue-600' },
-  [DESIGN_BRUSH_TYPES.PAIR]: { width: 160, height: 60, capacity: 2, label: 'Dubbel', color: 'from-purple-500 to-purple-600' },
-  [DESIGN_BRUSH_TYPES.TRIPLE]: { width: 240, height: 60, capacity: 3, label: 'Trippel', color: 'from-cyan-500 to-cyan-600' },
-  [DESIGN_BRUSH_TYPES.GROUP_4]: { width: 160, height: 120, capacity: 4, label: 'Grupp 4', color: 'from-pink-500 to-pink-600' },
-  [DESIGN_BRUSH_TYPES.GROUP_5]: { width: 200, height: 140, capacity: 5, label: 'Grupp 5', color: 'from-orange-500 to-orange-600' },
-  [DESIGN_BRUSH_TYPES.GROUP_6]: { width: 200, height: 140, capacity: 6, label: 'Grupp 6', color: 'from-amber-500 to-amber-600' }
+  [DESIGN_BRUSH_TYPES.SINGLE]: { width: 80, height: 60, capacity: 1, label: 'Singel', color: 'from-sky-500/90 to-sky-700/90' },
+  [DESIGN_BRUSH_TYPES.PAIR]: { width: 160, height: 60, capacity: 2, label: 'Dubbel', color: 'from-violet-500/90 to-violet-700/90' },
+  [DESIGN_BRUSH_TYPES.TRIPLE]: { width: 240, height: 60, capacity: 3, label: 'Trippel', color: 'from-cyan-500/90 to-cyan-700/90' },
+  [DESIGN_BRUSH_TYPES.GROUP_4]: { width: 160, height: 120, capacity: 4, label: 'Grupp 4', color: 'from-pink-500/90 to-pink-700/90' },
+  [DESIGN_BRUSH_TYPES.GROUP_5]: { width: 200, height: 140, capacity: 5, label: 'Grupp 5', color: 'from-orange-500/90 to-orange-700/90' },
+  [DESIGN_BRUSH_TYPES.GROUP_6]: { width: 200, height: 140, capacity: 6, label: 'Grupp 6', color: 'from-amber-500/90 to-amber-700/90' }
 };
 
 const DeskItem = ({
@@ -190,14 +190,14 @@ const FreePositioningCanvas = ({ isDesignMode, currentBrush, desks = [], onDesks
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-6 justify-center bg-white p-4 rounded-xl border border-gray-100 print:hidden shadow-sm">
-        <div className="text-center"><div className="text-2xl font-bold text-indigo-600">{safeDesks.length}</div><div className="text-xs text-gray-500 font-bold uppercase tracking-wider">Bänkar</div></div>
-        <div className="text-center"><div className="text-2xl font-bold text-purple-600">{safeDesks.reduce((s, d) => s + (d && DESK_TYPES[d.type]?.capacity ? DESK_TYPES[d.type].capacity : 0), 0)}</div><div className="text-xs text-gray-500 font-bold uppercase tracking-wider">Platser</div></div>
-        <div className="text-center"><div className="text-2xl font-bold text-green-600">{safeDesks.reduce((s, d) => s + (d && Array.isArray(d.students) ? d.students.filter(Boolean).length : 0), 0)}</div><div className="text-xs text-gray-500 font-bold uppercase tracking-wider">Placerade</div></div>
+      <div className="flex gap-6 justify-center glass p-4 rounded-2xl print:hidden">
+        <div className="text-center"><div className="text-2xl font-bold text-primary">{safeDesks.length}</div><div className="text-xs text-white/55 font-bold uppercase tracking-wider">Bänkar</div></div>
+        <div className="text-center"><div className="text-2xl font-bold text-accent">{safeDesks.reduce((s, d) => s + (d && DESK_TYPES[d.type]?.capacity ? DESK_TYPES[d.type].capacity : 0), 0)}</div><div className="text-xs text-white/55 font-bold uppercase tracking-wider">Platser</div></div>
+        <div className="text-center"><div className="text-2xl font-bold text-success">{safeDesks.reduce((s, d) => s + (d && Array.isArray(d.students) ? d.students.filter(Boolean).length : 0), 0)}</div><div className="text-xs text-white/55 font-bold uppercase tracking-wider">Placerade</div></div>
       </div>
-      <div ref={canvasRef} className={`relative bg-white rounded-2xl shadow-xl overflow-auto transition-all ${printBw ? 'print:border-0 print:shadow-none' : 'border-2 border-gray-200'}`} style={{ height: `${dynamicHeight}px`, width: dynamicWidth }} onClick={handleCanvasClick}>
-        <div className={`absolute top-0 left-0 right-0 h-16 flex items-center justify-center font-bold text-lg tracking-widest shadow-lg z-10 min-w-full ${printBw ? 'print:!bg-none print:!bg-white print:!text-black print:border-b-2 print:border-black print:shadow-none' : 'bg-gradient-to-b from-gray-800 to-gray-700 text-white border-b-4 border-gray-900'}`}>
-          <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse mr-3 print:hidden"></div>WHITEBOARD<div className="w-2 h-2 rounded-full bg-green-400 animate-pulse ml-3 print:hidden"></div>
+      <div ref={canvasRef} className={`relative rounded-2xl shadow-xl overflow-auto transition-all glass ${printBw ? 'print:border-0 print:shadow-none print:!bg-white' : ''}`} style={{ height: `${dynamicHeight}px`, width: dynamicWidth }} onClick={handleCanvasClick}>
+        <div className={`absolute top-0 left-0 right-0 h-16 flex items-center justify-center font-bold text-lg tracking-widest z-10 min-w-full ${printBw ? 'print:!bg-none print:!bg-white print:!text-black print:border-b-2 print:border-black print:shadow-none' : 'bg-panel/80 backdrop-blur-xl border-b border-white/10 text-white'}`}>
+          <div className="w-2 h-2 rounded-full bg-primary-2 animate-pulse mr-3 print:hidden"></div>WHITEBOARD<div className="w-2 h-2 rounded-full bg-primary-2 animate-pulse ml-3 print:hidden"></div>
         </div>
         <svg className="absolute inset-0 pointer-events-none opacity-10 print:hidden min-w-full min-h-full" style={{ zIndex: 1 }}><defs><pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse"><path d="M 50 0 L 0 0 0 50" fill="none" stroke="gray" strokeWidth="0.5"/></pattern></defs><rect width="100%" height="100%" fill="url(#grid)" /></svg>
         <div className="absolute inset-0 min-w-full z-5">

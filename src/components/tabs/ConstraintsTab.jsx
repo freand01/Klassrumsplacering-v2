@@ -55,26 +55,26 @@ const ConstraintsTab = ({ showNotification }) => {
 
   return (
     <div className="space-y-6 print:hidden">
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-        <h3 className="font-semibold mb-4 flex gap-2">
-          <ShieldAlert size={20} className="text-orange-600" /> Hantera kompisregler
+      <div className="glass p-6 rounded-2xl">
+        <h3 className="font-semibold mb-4 flex gap-2 text-text">
+          <ShieldAlert size={20} className="text-warning" /> Hantera kompisregler
         </h3>
         <div className="flex flex-col gap-4">
-          <div className="flex bg-gray-100 p-1 rounded-lg w-fit">
-            <button onClick={() => setConstraintType(CONSTRAINT_TYPES.AVOID)} className={`px-4 py-2 text-sm font-medium rounded-md flex items-center gap-2 ${constraintType === CONSTRAINT_TYPES.AVOID ? 'bg-white text-orange-700 shadow-sm' : 'text-gray-500'}`}>
+          <div className="flex bg-white/6 p-1 rounded-xl w-fit border border-white/10">
+            <button onClick={() => setConstraintType(CONSTRAINT_TYPES.AVOID)} className={`px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition-colors ${constraintType === CONSTRAINT_TYPES.AVOID ? 'bg-white/12 text-text border border-white/10' : 'text-white/60 hover:text-text'}`}>
               <Ban size={16} /> Får ej sitta bredvid
             </button>
-            <button onClick={() => setConstraintType(CONSTRAINT_TYPES.PAIR)} className={`px-4 py-2 text-sm font-medium rounded-md flex items-center gap-2 ${constraintType === CONSTRAINT_TYPES.PAIR ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500'}`}>
+            <button onClick={() => setConstraintType(CONSTRAINT_TYPES.PAIR)} className={`px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition-colors ${constraintType === CONSTRAINT_TYPES.PAIR ? 'bg-white/12 text-text border border-white/10' : 'text-white/60 hover:text-text'}`}>
               <Link size={16} /> Ska sitta bredvid
             </button>
           </div>
           <div className="flex flex-col md:flex-row gap-4 items-center">
-            <select className="flex-1 p-2 border rounded-lg w-full" value={constraintStudent1} onChange={e => setConstraintStudent1(e.target.value)}>
+            <select className="flex-1 p-2.5 rounded-xl w-full bg-panel/60 border border-border/60 text-text" value={constraintStudent1} onChange={e => setConstraintStudent1(e.target.value)}>
               <option value="">Elev 1</option>
               {getStudents().map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
-            <ArrowRight className="text-gray-400 hidden md:block" />
-            <select className="flex-1 p-2 border rounded-lg w-full" value={constraintStudent2} onChange={e => setConstraintStudent2(e.target.value)}>
+            <ArrowRight className="text-white/35 hidden md:block" />
+            <select className="flex-1 p-2.5 rounded-xl w-full bg-panel/60 border border-border/60 text-text" value={constraintStudent2} onChange={e => setConstraintStudent2(e.target.value)}>
               <option value="">Elev 2</option>
               {getStudents().filter(s => s.id !== constraintStudent1).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
@@ -91,12 +91,12 @@ const ConstraintsTab = ({ showNotification }) => {
           const isPair = c.type === CONSTRAINT_TYPES.PAIR;
 
           return (
-            <div key={c.id} className={`p-3 rounded-lg border flex justify-between items-center ${isPair ? 'bg-green-50 border-green-200 text-green-900' : 'bg-orange-50 border-orange-100 text-orange-900'}`}>
-              <span className="text-sm flex items-center gap-2">
+            <div key={c.id} className={`p-3 rounded-2xl border flex justify-between items-center ${isPair ? 'bg-success/10 border-success/25 text-text' : 'bg-warning/10 border-warning/20 text-text'}`}>
+              <span className="text-sm flex items-center gap-2 text-text">
                 {isPair ? <Link size={16} /> : <Ban size={16} />}
                 <b>{s1.name}</b> {isPair ? 'ska sitta med' : 'får ej sitta med'} <b>{s2.name}</b>
               </span>
-              <button onClick={() => dispatch({ type: ACTIONS.REMOVE_CONSTRAINT, payload: c.id })} className="text-gray-400 hover:text-red-600">
+              <button onClick={() => dispatch({ type: ACTIONS.REMOVE_CONSTRAINT, payload: c.id })} className="text-white/40 hover:text-rose-300">
                 <UserMinus size={18} />
               </button>
             </div>

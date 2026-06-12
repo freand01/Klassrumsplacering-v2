@@ -357,7 +357,7 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-4 print:hidden">
+      <div className="glass p-4 rounded-2xl flex flex-col gap-4 print:hidden">
         <div className="flex justify-between items-center">
           <Button variant={isDesignMode ? "primary" : "outline"} onClick={() => setIsDesignMode(!isDesignMode)}>
             <PenTool size={16} />{isDesignMode ? "Klar med möblering" : "Ändra möblering"}
@@ -366,8 +366,8 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
             {!isDesignMode && (
               <div className="flex items-center gap-4">
                 
-                <div className="flex items-center gap-3 bg-white px-3 py-1.5 rounded-xl border shadow-sm transition-colors border-gray-200">
-                  <span className={`text-sm font-bold ${!ignoreHistoryOnGen ? 'text-indigo-600' : 'text-gray-500'}`}>
+                <div className="flex items-center gap-3 bg-white/6 px-3 py-1.5 rounded-xl border transition-colors border-white/10">
+                  <span className={`text-sm font-bold ${!ignoreHistoryOnGen ? 'text-primary-2' : 'text-white/55'}`}>
                     Historik: {!ignoreHistoryOnGen ? 'PÅ' : 'AV'}
                   </span>
                   <label className="relative inline-flex items-center cursor-pointer">
@@ -377,17 +377,17 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
                       checked={!ignoreHistoryOnGen} 
                       onChange={(e) => setIgnoreHistoryOnGen(!e.target.checked)} 
                     />
-                    <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500"></div>
+                    <div className="w-11 h-6 bg-white/15 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-white/20 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                   </label>
                 </div>
 
                 <Button onClick={generateSeating} disabled={isGenerating}>{isGenerating ? '...' : 'Generera'} <RefreshCw size={18} /></Button>
                 
-                <div className="h-8 w-px bg-gray-200"></div>
+                <div className="h-8 w-px bg-white/10"></div>
                 
-                <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => setPrintBw(!printBw)}>
-                  <input type="checkbox" id="bwPrint" checked={printBw} onChange={(e) => setPrintBw(e.target.checked)} className="w-4 h-4 text-blue-600 rounded border-gray-300 pointer-events-none" />
-                  <label htmlFor="bwPrint" className="text-sm font-semibold text-gray-700 pointer-events-none">Svartvit utskrift</label>
+                <div className="flex items-center gap-2 bg-white/6 px-3 py-2 rounded-lg border border-white/10 cursor-pointer hover:bg-white/10 transition-colors" onClick={() => setPrintBw(!printBw)}>
+                  <input type="checkbox" id="bwPrint" checked={printBw} onChange={(e) => setPrintBw(e.target.checked)} className="w-4 h-4 rounded border-white/20 pointer-events-none" />
+                  <label htmlFor="bwPrint" className="text-sm font-semibold text-white/80 pointer-events-none">Svartvit utskrift</label>
                 </div>
                 <Button variant="secondary" onClick={() => window.print()} disabled={safeDesks.length === 0}><Printer size={18} /> Skriv ut</Button>
               </div>
@@ -396,21 +396,21 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
         </div>
 
         {isDesignMode && (
-          <div className="bg-purple-50 border border-purple-100 p-4 rounded-xl flex flex-col gap-4">
-            <div className="bg-white p-3 rounded-lg border border-purple-100 shadow-sm">
-              <span className="text-xs font-bold text-purple-900 uppercase block mb-2">Automatiska layouter:</span>
+          <div className="bg-white/4 border border-white/10 p-4 rounded-2xl flex flex-col gap-4">
+            <div className="bg-white/6 p-3 rounded-xl border border-white/10">
+              <span className="text-xs font-bold text-white/75 uppercase block mb-2">Automatiska layouter:</span>
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => generateAutoLayout('singles')} className="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all border border-slate-200"><Square size={16} /> Singelrader</button>
-                <button onClick={() => generateAutoLayout('rows')} className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all border border-indigo-200"><LayoutTemplate size={16} /> Traditionella rader</button>
-                <button onClick={() => generateAutoLayout('triples')} className="px-3 py-2 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all border border-cyan-200"><MoreHorizontal size={16} /> Trippelrader</button>
-                <button onClick={() => generateAutoLayout('islands')} className="px-3 py-2 bg-pink-50 hover:bg-pink-100 text-pink-700 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all border border-pink-200"><Users size={16} /> Gruppöar</button>
-                <button onClick={() => generateAutoLayout('horseshoe')} className="px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all border border-amber-200"><Magnet size={16} className="rotate-180" /> Hästsko</button>
-                <button onClick={() => generateAutoLayout('circle')} className="px-3 py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all border border-teal-200"><Circle size={16} /> Ring</button>
+                <button onClick={() => generateAutoLayout('singles')} className="px-3 py-2 bg-white/6 hover:bg-white/10 text-white/85 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all border border-white/10"><Square size={16} /> Singelrader</button>
+                <button onClick={() => generateAutoLayout('rows')} className="px-3 py-2 bg-white/6 hover:bg-white/10 text-white/85 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all border border-white/10"><LayoutTemplate size={16} /> Traditionella rader</button>
+                <button onClick={() => generateAutoLayout('triples')} className="px-3 py-2 bg-white/6 hover:bg-white/10 text-white/85 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all border border-white/10"><MoreHorizontal size={16} /> Trippelrader</button>
+                <button onClick={() => generateAutoLayout('islands')} className="px-3 py-2 bg-white/6 hover:bg-white/10 text-white/85 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all border border-white/10"><Users size={16} /> Gruppöar</button>
+                <button onClick={() => generateAutoLayout('horseshoe')} className="px-3 py-2 bg-white/6 hover:bg-white/10 text-white/85 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all border border-white/10"><Magnet size={16} className="rotate-180" /> Hästsko</button>
+                <button onClick={() => generateAutoLayout('circle')} className="px-3 py-2 bg-white/6 hover:bg-white/10 text-white/85 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all border border-white/10"><Circle size={16} /> Ring</button>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-2 items-center">
-              <span className="text-xs font-bold text-purple-900 uppercase">Möbeltyper:</span>
+              <span className="text-xs font-bold text-white/75 uppercase">Möbeltyper:</span>
               {[
                 { type: DESIGN_BRUSH_TYPES.SINGLE, label: '🪑 Singel' },
                 { type: DESIGN_BRUSH_TYPES.PAIR, label: '🪑🪑 Dubbel' },
@@ -419,21 +419,21 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
                 { type: DESIGN_BRUSH_TYPES.GROUP_5, label: '⬡ Gr. 5' },
                 { type: DESIGN_BRUSH_TYPES.GROUP_6, label: '▦ Gr. 6' }
               ].map(t => (
-                <button key={t.type} onClick={() => setDesignBrush(t.type)} className={`px-3 py-2 rounded-lg border text-sm font-semibold ${designBrush === t.type ? 'bg-purple-600 text-white shadow-md' : 'bg-white text-purple-900 border-purple-200 hover:bg-purple-100'}`}>{t.label}</button>
+                <button key={t.type} onClick={() => setDesignBrush(t.type)} className={`px-3 py-2 rounded-lg border text-sm font-semibold ${designBrush === t.type ? 'bg-white/12 text-white border-white/20 shadow-glow' : 'bg-white/6 text-white/85 border-white/10 hover:bg-white/10'}`}>{t.label}</button>
               ))}
-              <div className="h-6 w-[1px] bg-purple-200 mx-1"></div>
-              <button onClick={alignDesks} className="px-3 py-2 rounded-lg border text-sm font-semibold bg-white text-gray-700 hover:bg-blue-50 border-gray-200 flex items-center gap-1"><AlignCenter size={14} /> Centrera</button>
+              <div className="h-6 w-[1px] bg-white/10 mx-1"></div>
+              <button onClick={alignDesks} className="px-3 py-2 rounded-lg border text-sm font-semibold bg-white/6 text-white/85 hover:bg-white/10 border-white/10 flex items-center gap-1"><AlignCenter size={14} /> Centrera</button>
             </div>
             
             {/* HÄR ÄR DEN SAKNADE DELEN TILLBAKA! */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-2 border-t border-purple-200 pt-3 gap-3">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-2 border-t border-white/10 pt-3 gap-3">
               <div className="flex flex-wrap gap-2 items-center w-full sm:w-auto">
-                <span className="text-xs font-bold text-purple-900 uppercase">Egna mallar:</span>
-                <select className="p-2 text-sm border rounded-lg bg-white" onChange={(e) => { if (e.target.value) { const t = Array.isArray(data?.roomLayouts) ? data.roomLayouts.find(l => l && l.id === e.target.value) : null; if(t) { setDesks(Array.isArray(t.desks) ? t.desks : []); setLockedSeats(new Set()); updateActivePlanInState({desks: Array.isArray(t.desks) ? t.desks : []}); if (typeof showNotification === 'function') showNotification('Mall laddad', 'success'); } } }} value=""><option value="" disabled>Ladda sparad mall...</option>{Array.isArray(data?.roomLayouts) ? data.roomLayouts.filter(l => l && l.classId === currentClassId).map(l => <option key={l.id} value={l.id}>{l.name}</option>) : null}</select>
-                <input type="text" placeholder="Namn på ny mall..." className="p-2 text-sm border rounded-lg w-32" value={layoutName} onChange={e => setLayoutName(e.target.value)} />
+                <span className="text-xs font-bold text-white/75 uppercase">Egna mallar:</span>
+                <select className="p-2.5 text-sm border border-white/10 rounded-xl bg-panel/60 text-text" onChange={(e) => { if (e.target.value) { const t = Array.isArray(data?.roomLayouts) ? data.roomLayouts.find(l => l && l.id === e.target.value) : null; if(t) { setDesks(Array.isArray(t.desks) ? t.desks : []); setLockedSeats(new Set()); updateActivePlanInState({desks: Array.isArray(t.desks) ? t.desks : []}); if (typeof showNotification === 'function') showNotification('Mall laddad', 'success'); } } }} value=""><option value="" disabled>Ladda sparad mall...</option>{Array.isArray(data?.roomLayouts) ? data.roomLayouts.filter(l => l && l.classId === currentClassId).map(l => <option key={l.id} value={l.id}>{l.name}</option>) : null}</select>
+                <input type="text" placeholder="Namn på ny mall..." className="p-2.5 text-sm border border-white/10 rounded-xl bg-panel/60 text-text w-32" value={layoutName} onChange={e => setLayoutName(e.target.value)} />
                 <Button variant="primary" className="text-sm py-1.5" disabled={!layoutName.trim() || safeDesks.length === 0} onClick={() => { dispatch({type: ACTIONS.SAVE_ROOM_LAYOUT, payload: {id: crypto.randomUUID(), classId: currentClassId, name: layoutName, desks: safeDesks.map(d => ({...d, students: []}))}}); setLayoutName(''); if (typeof showNotification === 'function') showNotification('Mall sparad', 'success'); }}>Spara</Button>
               </div>
-              <button onClick={() => { if(window.confirm('Vill du rensa hela rummet?')) { setDesks([]); updateActivePlanInState({ desks: [] }); if (typeof showNotification === 'function') showNotification('Rensat', 'info'); } }} className="text-xs text-red-600 hover:bg-red-50 p-2 rounded flex items-center font-bold border border-transparent hover:border-red-200 transition-all"><RotateCcw size={14} className="mr-1"/> Rensa rum</button>
+              <button onClick={() => { if(window.confirm('Vill du rensa hela rummet?')) { setDesks([]); updateActivePlanInState({ desks: [] }); if (typeof showNotification === 'function') showNotification('Rensat', 'info'); } }} className="text-xs text-rose-300 hover:bg-white/5 p-2 rounded flex items-center font-bold border border-transparent hover:border-white/10 transition-all"><RotateCcw size={14} className="mr-1"/> Rensa rum</button>
             </div>
 
           </div>
@@ -441,27 +441,27 @@ const LayoutTab = ({ showNotification, setHasUnsavedChanges }) => {
       </div>
 
       {localUnsaved && !isDesignMode && (
-        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-fade-in print:hidden shadow-sm">
+        <div className="bg-warning/10 border border-warning/20 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-fade-in print:hidden shadow-sm">
           <div className="flex-grow">
-            <h3 className="font-bold text-orange-800 flex items-center gap-2">
-              <Star size={18} className="text-orange-500 fill-orange-500" /> Förslag på placering
-              {Object.keys(historyConflicts).length > 0 && <span className="text-xs bg-orange-200 text-orange-800 px-2 py-1 rounded-full animate-pulse ml-2">⚠️ {Object.keys(historyConflicts).length} krockar</span>}
+            <h3 className="font-bold text-text flex items-center gap-2">
+              <Star size={18} className="text-warning fill-warning" /> Förslag på placering
+              {Object.keys(historyConflicts).length > 0 && <span className="text-xs bg-warning/20 text-warning px-2 py-1 rounded-full animate-pulse ml-2 border border-warning/25">⚠️ {Object.keys(historyConflicts).length} krockar</span>}
             </h3>
-            <p className="text-sm text-orange-600">Spara i historiken när du är nöjd.</p>
+            <p className="text-sm text-muted">Spara i historiken när du är nöjd.</p>
           </div>
           
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-            <label className="flex items-center gap-2 cursor-pointer bg-white/50 px-3 py-2 rounded-lg border border-orange-200 hover:bg-white transition-all group">
-              <EyeOff size={16} className={excludeCurrentFromHistory ? 'text-orange-600' : 'text-gray-400'} />
-              <span className={`text-xs font-semibold ${excludeCurrentFromHistory ? 'text-orange-800' : 'text-gray-500'}`}>Undanta från framtida historik</span>
-              <input type="checkbox" className="w-4 h-4 text-orange-600 rounded border-orange-300" checked={excludeCurrentFromHistory} onChange={e => setExcludeCurrentFromHistory(e.target.checked)} />
+            <label className="flex items-center gap-2 cursor-pointer bg-white/6 px-3 py-2 rounded-lg border border-white/10 hover:bg-white/10 transition-all group">
+              <EyeOff size={16} className={excludeCurrentFromHistory ? 'text-warning' : 'text-white/45'} />
+              <span className={`text-xs font-semibold ${excludeCurrentFromHistory ? 'text-warning' : 'text-white/60'}`}>Undanta från framtida historik</span>
+              <input type="checkbox" className="w-4 h-4 rounded border-white/20" checked={excludeCurrentFromHistory} onChange={e => setExcludeCurrentFromHistory(e.target.checked)} />
             </label>
 
-            <Input className="w-full md:w-48 text-sm bg-white border-orange-200" placeholder={`T.ex. Slöjd v.${getWeekNumber()}`} value={planName} onChange={e => setPlanName(e.target.value)} />
+            <Input className="w-full md:w-48 text-sm" placeholder={`T.ex. Slöjd v.${getWeekNumber()}`} value={planName} onChange={e => setPlanName(e.target.value)} />
             
-            <Button variant="ghost" className="bg-orange-100/50 text-orange-800" onClick={() => { if (desksBackup) { setDesks(desksBackup); updateActivePlanInState({ desks: desksBackup }); } setLocalUnsaved(false); updateUnsavedChanges(false); setPlanName(''); }}>Återställ</Button>
+            <Button variant="ghost" className="bg-white/6" onClick={() => { if (desksBackup) { setDesks(desksBackup); updateActivePlanInState({ desks: desksBackup }); } setLocalUnsaved(false); updateUnsavedChanges(false); setPlanName(''); }}>Återställ</Button>
             
-            <Button className="bg-orange-600 text-white" onClick={() => {
+            <Button onClick={() => {
               const finalName = planName || `${className} v.${getWeekNumber()} (Sparad)`;
               dispatch({type: ACTIONS.SAVE_PLAN, payload: {
                 id: crypto.randomUUID(), 
