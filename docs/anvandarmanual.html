@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Användarmanual – Klassrumsplacering</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a2332;
+      --text: #e8edf4;
+      --muted: #8b9cb3;
+      --primary: #6366f1;
+      --primary-2: #818cf8;
+      --warning: #f59e0b;
+      --success: #22c55e;
+      --border: rgba(255,255,255,0.1);
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 17px;
+    }
+
+    .page-header {
+      background: linear-gradient(135deg, #312e81 0%, #1e1b4b 50%, #0f172a 100%);
+      padding: 2.5rem 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .page-header h1 { font-size: 2rem; margin-bottom: 0.4rem; }
+    .page-header .subtitle { color: rgba(255,255,255,0.75); font-size: 1.05rem; max-width: 700px; }
+
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    section { margin-bottom: 3rem; scroll-margin-top: 1rem; }
+
+    h2 {
+      font-size: 1.55rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 2px solid var(--primary);
+      color: #fff;
+    }
+
+    h3 {
+      font-size: 1.2rem;
+      margin: 2rem 0 0.75rem;
+      color: var(--primary-2);
+    }
+
+    p { margin-bottom: 1rem; color: rgba(255,255,255,0.88); }
+
+    ul, ol { margin: 0 0 1rem 1.4rem; color: rgba(255,255,255,0.88); }
+    li { margin-bottom: 0.45rem; }
+
+    .steps { counter-reset: step; list-style: none; margin-left: 0 !important; }
+    .steps > li {
+      counter-increment: step;
+      position: relative;
+      padding-left: 3rem;
+      margin-bottom: 1.5rem;
+    }
+    .steps > li::before {
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: 0.1rem;
+      width: 2rem;
+      height: 2rem;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .steps > li strong { color: #fff; }
+
+    figure { margin: 1.25rem 0 2rem; }
+    figure img {
+      width: 100%;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      display: block;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    }
+    figcaption {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+      font-style: italic;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin: 1.25rem 0;
+    }
+    .card.tip { border-left: 4px solid var(--success); }
+    .card.warn { border-left: 4px solid var(--warning); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.95rem;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.6rem 0.8rem;
+      text-align: left;
+    }
+    th { background: rgba(99,102,241,0.15); color: #fff; }
+    td { background: rgba(255,255,255,0.03); }
+
+    .badge {
+      display: inline-block;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      margin-right: 0.35rem;
+      vertical-align: middle;
+    }
+    .badge-yellow { background: #eab308; }
+    .badge-green { background: #22c55e; }
+    .badge-blue { background: #3b82f6; }
+    .badge-purple { background: #a855f7; }
+    .badge-orange { background: #f97316; }
+
+    .example-box {
+      background: rgba(99,102,241,0.1);
+      border: 1px solid rgba(129,140,248,0.25);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      margin: 1rem 0;
+      font-family: Consolas, 'Courier New', monospace;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .toc {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+    .toc h2 { font-size: 1rem; border: none; margin-bottom: 0.75rem; padding: 0; }
+    .toc ol { margin-bottom: 0; }
+    .toc a { color: var(--primary-2); text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+
+    hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+
+    footer {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+<header class="page-header">
+  <h1>Användarmanual – Klassrumsplacering</h1>
+  <p class="subtitle">
+    En steg-för-steg-guide för lärare. Vi följer ett konkret exempel där du skapar placering för klassen <strong>9A</strong> med tolv elever.
+  </p>
+</header>
+
+<div class="container">
+
+  <nav class="toc">
+    <h2>Innehåll</h2>
+    <ol>
+      <li><a href="#intro">Vad är Klassrumsplacering?</a></li>
+      <li><a href="#steg-1">Steg 1 – Skapa klassen 9A</a></li>
+      <li><a href="#steg-2">Steg 2 – Lägg till elever</a></li>
+      <li><a href="#steg-3">Steg 3 – Ange elevbehov</a></li>
+      <li><a href="#steg-4">Steg 4 – Skapa kompisregler</a></li>
+      <li><a href="#steg-5">Steg 5 – Möblera klassrummet</a></li>
+      <li><a href="#steg-6">Steg 6 – Generera placering</a></li>
+      <li><a href="#steg-7">Steg 7 – Justera, låsa och spara</a></li>
+      <li><a href="#steg-8">Steg 8 – Historik och utskrift</a></li>
+      <li><a href="#referens">Snabbreferens</a></li>
+      <li><a href="#tips">Tips och felsökning</a></li>
+    </ol>
+  </nav>
+
+  <!-- INTRO -->
+  <section id="intro">
+    <h2>Vad är Klassrumsplacering?</h2>
+    <p>
+      Klassrumsplacering hjälper dig som lärare att skapa nya sittplatser i klassrummet – snabbt, rättvist och med hänsyn till elevernas behov.
+      Du lägger in eleverna, anger vilka regler som gäller, ritar upp hur bänkarna står, och låter sedan programmet föreslå en placering.
+    </p>
+    <p>Programmet fungerar i webbläsaren eller som installerad app på datorn. Gränssnittet är detsamma i båda fallen.</p>
+    <p><strong>All data sparas på din egen dator</strong> – inget skickas till molnet och det finns ingen inloggning.</p>
+
+    <h3>De fyra flikarna</h3>
+    <table>
+      <tr><th>Flik</th><th>Används till</th></tr>
+      <tr><td><strong>Elever</strong></td><td>Lägga till och hantera elever i klassen</td></tr>
+      <tr><td><strong>Regler</strong></td><td>Ange vem som ska eller inte ska sitta bredvid varandra</td></tr>
+      <tr><td><strong>Placering</strong></td><td>Möblera rummet, generera och justera sittplatser</td></tr>
+      <tr><td><strong>Historik</strong></td><td>Se och öppna tidigare sparade placeringar</td></tr>
+    </table>
+
+    <figure>
+      <img src="images/01-start.png" alt="Startskärm i Klassrumsplacering utan skapad klass">
+      <figcaption>Startskärmen när du öppnar programmet första gången.</figcaption>
+    </figure>
+  </section>
+
+  <hr>
+
+  <!-- STEG 1 -->
+  <section id="steg-1">
+    <h2>Steg 1 – Skapa klassen 9A</h2>
+    <p>I vårt exempel ska vi arbeta med klassen <strong>9A</strong>. Börja med att skapa den.</p>
+
+    <ol class="steps">
+      <li>Öppna Klassrumsplacering i webbläsaren eller starta skrivbordsappen.</li>
+      <li>I klassväljaren (under rubriken) skriver du <strong>9A</strong> i fältet <em>Ny klass...</em>.</li>
+      <li>Klicka på knappen <strong>Skapa</strong>.</li>
+    </ol>
+
+    <figure>
+      <img src="images/02-skapa-klass.png" alt="Skriva in klassnamnet 9A">
+      <figcaption>Skriv klassnamnet och klicka Skapa.</figcaption>
+    </figure>
+
+    <p>Klassen blir aktiv direkt. Fliken <strong>Elever</strong> visas och du kan börja lägga till elever.</p>
+
+    <figure>
+      <img src="images/03-klass-skapad.png" alt="Klassen 9A är skapad och aktiv">
+      <figcaption>Klassen 9A är skapad – nu är det dags att lägga till elever.</figcaption>
+    </figure>
+  </section>
+
+  <!-- STEG 2 -->
+  <section id="steg-2">
+    <h2>Steg 2 – Lägg till elever</h2>
+    <p>Det snabbaste sättet att lägga in en hel klass är att <strong>klistra in en namnlista</strong>. I exemplet använder vi tolv elever:</p>
+
+    <div class="example-box">
+      Anna Andersson<br>
+      Bertil Berg<br>
+      Cecilia Carlsson<br>
+      David Dahl<br>
+      Erika Ek<br>
+      Fredrik Fransson<br>
+      Greta Gran<br>
+      Henrik Hansson<br>
+      Ingrid Isaksson<br>
+      Jonas Johansson<br>
+      Klara Karlsson<br>
+      Lukas Larsson
+    </div>
+
+    <ol class="steps">
+      <li>Se till att du är på fliken <strong>Elever</strong>.</li>
+      <li>Klicka på <strong>Klistra in lista</strong> uppe till höger.</li>
+      <li>Klistra in namnlistan i textrutan. Namn kan separeras med <strong>ny rad</strong> eller <strong>kommatecken</strong>.</li>
+      <li>Klicka <strong>Importera</strong>. Antalet elever visas på knappen, t.ex. &quot;Importera (12)&quot;.</li>
+    </ol>
+
+    <figure>
+      <img src="images/04-klistra-in-lista.png" alt="Dialogrutan Klistra in namn med elevlista">
+      <figcaption>Klistra in elevlistan och klicka Importera.</figcaption>
+    </figure>
+
+    <p>Eleverna visas nu som kort i en lista, sorterade i bokstavsordning.</p>
+
+    <figure>
+      <img src="images/05-elever-lista.png" alt="Tolv elever listade i klassen 9A">
+      <figcaption>Alla tolv elever är tillagda i klassen 9A.</figcaption>
+    </figure>
+
+    <div class="card tip">
+      <strong>Alternativ:</strong> Du kan också lägga till elever en i taget (namn + kryssrutor + Lägg till) eller via <strong>Lägg till flera...</strong> som öppnar en tabell.
+    </div>
+  </section>
+
+  <!-- STEG 3 -->
+  <section id="steg-3">
+    <h2>Steg 3 – Ange elevbehov</h2>
+    <p>Vissa elever kan behöva sitta på en särskild plats. I exemplet sätter vi behov på tre elever:</p>
+
+    <table>
+      <tr><th>Elev</th><th>Behov</th><th>Betydelse</th></tr>
+      <tr>
+        <td><strong>Anna Andersson</strong></td>
+        <td><span class="badge badge-yellow"></span> Nära tavlan</td>
+        <td>Skall sitta i de främre raderna, nära tavlan</td>
+      </tr>
+      <tr>
+        <td><strong>Bertil Berg</strong></td>
+        <td><span class="badge badge-green"></span> Vid vägg</td>
+        <td>Skall sitta på ytterplats, längst ut vid väggen</td>
+      </tr>
+      <tr>
+        <td><strong>Cecilia Carlsson</strong></td>
+        <td><span class="badge badge-blue"></span> Ensam</td>
+        <td>Skall sitta ensam – inte dela bänk med någon</td>
+      </tr>
+    </table>
+
+    <ol class="steps">
+      <li>Klicka på elevens kort i listan (t.ex. <strong>Anna Andersson</strong>).</li>
+      <li>Dialogrutan <em>Redigera Elev</em> öppnas.</li>
+      <li>Kryssa i rätt behov – t.ex. <em>Måste sitta nära tavlan</em>.</li>
+      <li>Klicka <strong>Spara ändringar</strong>.</li>
+      <li>Upprepa för övriga elever som har särskilda behov.</li>
+    </ol>
+
+    <figure>
+      <img src="images/06-redigera-elev.png" alt="Dialogrutan Redigera Elev med kryssruta för nära tavlan">
+      <figcaption>Klicka på en elev och kryssa i behov i dialogrutan.</figcaption>
+    </figure>
+
+    <p>Elevbehov visas som färgade märken på elevkorten: <span class="badge badge-yellow"></span> Tavla, <span class="badge badge-green"></span> Vägg, <span class="badge badge-blue"></span> Ensam.</p>
+
+    <figure>
+      <img src="images/07-elever-med-behov.png" alt="Elever med behovsmärken Tavla, Vägg och Ensam">
+      <figcaption>Anna (Tavla), Bertil (Vägg) och Cecilia (Ensam) är markerade.</figcaption>
+    </figure>
+  </section>
+
+  <!-- STEG 4 -->
+  <section id="steg-4">
+    <h2>Steg 4 – Skapa kompisregler</h2>
+    <p>På fliken <strong>Regler</strong> anger du relationer mellan elever. I exemplet skapar vi två regler:</p>
+
+    <table>
+      <tr><th>Regel</th><th>Elever</th></tr>
+      <tr><td>🚫 <strong>Får ej sitta bredvid</strong></td><td>Anna Andersson och Bertil Berg</td></tr>
+      <tr><td>🔗 <strong>Ska sitta bredvid</strong></td><td>Erika Ek och Fredrik Fransson</td></tr>
+    </table>
+
+    <ol class="steps">
+      <li>Klicka på fliken <strong>Regler</strong>.</li>
+      <li>Välj regeltyp: <em>Får ej sitta bredvid</em> eller <em>Ska sitta bredvid</em>.</li>
+      <li>Välj <strong>Elev 1</strong> och <strong>Elev 2</strong> i listrutorna.</li>
+      <li>Klicka <strong>Spara regel</strong>.</li>
+      <li>Upprepa för nästa regel.</li>
+    </ol>
+
+    <figure>
+      <img src="images/08-regler.png" alt="Kompisregler för klassen 9A">
+      <figcaption>Båda reglerna visas i listan – röd/orange för &quot;får ej&quot;, grön för &quot;ska sitta med&quot;.</figcaption>
+    </figure>
+
+    <div class="card warn">
+      <strong>Obs!</strong> Om du sätter regeln &quot;Ska sitta bredvid&quot; på en elev som samtidigt har behovet <em>Ensam</em> varnar programmet dig. Det kan göra det svårt för algoritmen att hitta en bra lösning.
+    </div>
+  </section>
+
+  <!-- STEG 5 -->
+  <section id="steg-5">
+    <h2>Steg 5 – Möblera klassrummet</h2>
+    <p>Innan programmet kan placera elever måste du rita upp hur bänkarna står i klassrummet. Gå till fliken <strong>Placering</strong>.</p>
+
+    <h3>Automatisk layout (enklast)</h3>
+    <ol class="steps">
+      <li>Klicka <strong>Ändra möblering</strong> om du inte redan är i möbleringsläge.</li>
+      <li>Under <em>Automatiska layouter</em> väljer du en layout. För vår klass med tolv elever passar <strong>Traditionella rader</strong> bra (dubbelbänkar i rader).</li>
+      <li>Bänkarna placeras ut på canvas. Tavlan (WHITEBOARD) visas längst upp – det är framsidan av klassrummet.</li>
+      <li>Klicka <strong>Klar med möblering</strong> när du är nöjd.</li>
+    </ol>
+
+    <figure>
+      <img src="images/09-moblering-design.png" alt="Möbleringsläge med val av automatiska layouter">
+      <figcaption>I möbleringsläge väljer du layout eller placerar bänkar manuellt.</figcaption>
+    </figure>
+
+    <figure>
+      <img src="images/10-bankar-placerade.png" alt="Traditionella rader med sex dubbelbänkar">
+      <figcaption>Traditionella rader – sex dubbelbänkar ger tolv platser för våra tolv elever.</figcaption>
+    </figure>
+
+    <h3>Manuell möblering (valfritt)</h3>
+    <p>Du kan också placera bänkar för hand:</p>
+    <ul>
+      <li>Välj möbeltyp: Singel, Dubbel, Trippel, Gr. 4, Gr. 5 eller Gr. 6.</li>
+      <li>Klicka på canvas för att placera en bänk.</li>
+      <li>Dra bänken för att flytta den. Använd rotationsknappen (blå) eller ta bort med X (röd).</li>
+      <li><strong>Centrera</strong> justerar alla bänkar snyggt i rader.</li>
+      <li>Under <em>Egna mallar</em> kan du spara rummet för att återanvända det i andra klasser.</li>
+    </ul>
+
+    <p>Övriga automatiska layouter:</p>
+    <table>
+      <tr><th>Layout</th><th>Beskrivning</th></tr>
+      <tr><td>Singelrader</td><td>En elev per bänk</td></tr>
+      <tr><td>Traditionella rader</td><td>Dubbelbänkar i rader</td></tr>
+      <tr><td>Trippelrader</td><td>Trebänksbord i rader</td></tr>
+      <tr><td>Gruppöar</td><td>Fyrpersonsgrupper</td></tr>
+      <tr><td>Hästsko</td><td>Bänkar i U-form</td></tr>
+      <tr><td>Ring</td><td>Bänkar i en cirkel</td></tr>
+    </table>
+  </section>
+
+  <!-- STEG 6 -->
+  <section id="steg-6">
+    <h2>Steg 6 – Generera placering</h2>
+    <p>Nu är allt klart – dags att låta programmet föreslå en placering!</p>
+
+    <ol class="steps">
+      <li>Se till att du <em>inte</em> är i möbleringsläge.</li>
+      <li>Kontrollera växeln <strong>Historik: PÅ/AV</strong>:
+        <ul>
+          <li><strong>PÅ</strong> – programmet försöker undvika att elever som suttit bredvid varandra tidigare hamnar bredvid varandra igen.</li>
+          <li><strong>AV</strong> – historiken ignoreras (bra första gången).</li>
+        </ul>
+      </li>
+      <li>Klicka <strong>Generera</strong>.</li>
+      <li>Efter ett ögonblick visas eleverna på bänkarna. En gul ruta <em>Förslag på placering</em> dyker upp.</li>
+    </ol>
+
+    <figure>
+      <img src="images/11-placering-genererad.png" alt="Genererad placering med alla tolv elever på bänkarna">
+      <figcaption>Placeringförslag för klass 9A – alla tolv elever är placerade.</figcaption>
+    </figure>
+
+    <p>Programmet placerar elever i denna ordning:</p>
+    <ol>
+      <li>Elever på <strong>låsta platser</strong> (om du låst några tidigare)</li>
+      <li>Elever med behovet <strong>Ensam</strong></li>
+      <li>Elever med behovet <strong>Nära tavlan</strong></li>
+      <li>Elever med behovet <strong>Vid vägg</strong></li>
+      <li>Övriga elever – med hänsyn till kompisregler och historik</li>
+    </ol>
+
+    <div class="card tip">
+      <strong>Tips:</strong> Gillar du inte resultatet? Klicka <strong>Generera</strong> igen – varje körning ger ett nytt förslag. Du kan också låsa de platser du gillar och generera om resten.
+    </div>
+  </section>
+
+  <!-- STEG 7 -->
+  <section id="steg-7">
+    <h2>Steg 7 – Justera, låsa och spara</h2>
+
+    <h3>Flytta en elev manuellt</h3>
+    <ol class="steps">
+      <li>Klicka på en elev på canvas – den markeras med grön ram.</li>
+      <li>Klicka på en annan plats (tom plats eller annan elev). Vid byte med annan elev byter de plats.</li>
+      <li>Klicka på samma elev igen för att avbryta valet.</li>
+    </ol>
+    <p>Om flytten bryter mot en regel, ett behov eller historiken visas en varning – du kan välja att flytta ändå.</p>
+
+    <h3>Låsa en plats</h3>
+    <p>Klicka på <strong>hänglåsikonen</strong> på en plats. Låsta platser (lila ring) behålls vid ny generering – eleven flyttas inte.</p>
+
+    <h3>Spara i historiken</h3>
+    <ol class="steps">
+      <li>När du är nöjd med placeringen, skriv ett namn i fältet i den gula rutan – t.ex. <strong>9A – Vecka 12</strong>.</li>
+      <li>Valfritt: kryssa i <em>Undanta från framtida historik</em> om denna placering inte ska påverka framtida genereringar.</li>
+      <li>Klicka <strong>Spara</strong>.</li>
+    </ol>
+
+    <figure>
+      <img src="images/12-forslag-spara.png" alt="Banner Förslag på placering med namnfält och Spara-knapp">
+      <figcaption>Ge placeringen ett namn och klicka Spara för att lägga den i historiken.</figcaption>
+    </figure>
+
+    <p>Knappen <strong>Återställ</strong> tar tillbaka placeringen till hur den såg ut innan dina senaste manuella ändringar.</p>
+
+    <div class="card warn">
+      <strong>Osparade ändringar:</strong> Om du försöker byta flik eller klass utan att ha sparat visas en varning. Du kan då välja att spara, kasta ändringarna eller avbryta.
+    </div>
+  </section>
+
+  <!-- STEG 8 -->
+  <section id="steg-8">
+    <h2>Steg 8 – Historik och utskrift</h2>
+
+    <h3>Öppna en tidigare placering</h3>
+    <ol class="steps">
+      <li>Gå till fliken <strong>Historik</strong>.</li>
+      <li>Klicka <strong>Öppna</strong> på den placering du vill titta på.</li>
+      <li>Du flyttas till fliken Placering och den sparade layouten laddas.</li>
+    </ol>
+
+    <figure>
+      <img src="images/13-historik.png" alt="Historikfliken med sparad placering 9A Vecka 12">
+      <figcaption>Sparade placeringar visas med namn och datum.</figcaption>
+    </figure>
+
+    <h3>Skriv ut placeringen</h3>
+    <ol class="steps">
+      <li>Gå till fliken <strong>Placering</strong> med en färdig placering på skärmen.</li>
+      <li>Välj om du vill ha <strong>Svartvit utskrift</strong> (kryssrutan).</li>
+      <li>Klicka <strong>Skriv ut</strong>.</li>
+      <li>I webbläsarens utskriftsdialog: välj skrivare eller &quot;Spara som PDF&quot;. Använd <strong>liggande orientering</strong> för bäst resultat.</li>
+    </ol>
+    <p>Vid utskrift döljs menyer och knappar – bara klassrummet med elevnamn skrivs ut.</p>
+
+    <h3>Spara hela projektet till fil</h3>
+    <p>Utöver automatisk lagring i webbläsaren kan du spara allt (alla klasser, elever, regler och historik) som en fil på datorn:</p>
+    <ol class="steps">
+      <li>Klicka <strong>Spara</strong> i headern (uppe till höger).</li>
+      <li>Välj var filen ska sparas. En röd prick på knappen visar att det finns osparade ändringar.</li>
+      <li>För att öppna en sparad fil senare: klicka <strong>Öppna</strong> i headern.</li>
+    </ol>
+
+    <figure>
+      <img src="images/14-header.png" alt="Header med knapparna Ljust, Öppna och Spara">
+      <figcaption>Öppna och Spara finns alltid tillgängliga i headern.</figcaption>
+    </figure>
+  </section>
+
+  <hr>
+
+  <!-- REFERENS -->
+  <section id="referens">
+    <h2>Snabbreferens</h2>
+
+    <h3>Färgkoder på canvas</h3>
+    <table>
+      <tr><th>Markering</th><th>Betydelse</th></tr>
+      <tr><td><span class="badge badge-yellow"></span> Gul prick</td><td>Behov: nära tavlan</td></tr>
+      <tr><td><span class="badge badge-green"></span> Grön prick</td><td>Behov: vid vägg</td></tr>
+      <tr><td><span class="badge badge-blue"></span> Blå prick</td><td>Behov: ensam</td></tr>
+      <tr><td><span class="badge badge-purple"></span> Lila ring</td><td>Låst plats</td></tr>
+      <tr><td>Grön ram</td><td>Vald elev (vid manuell flytt)</td></tr>
+      <tr><td><span class="badge badge-orange"></span> Orange markering</td><td>Tidigare bänkgrannar (historikkonflikt)</td></tr>
+    </table>
+
+    <h3>Flera klasser</h3>
+    <p>Du kan ha flera klasser i samma projekt – t.ex. 9A och 9B. Klicka på klassnamnet i klassväljaren för att byta. Varje klass har egna elever, regler och historik.</p>
+
+    <h3>Rummallar</h3>
+    <p>Om du har flera klassrum med olika bänkuppsättningar kan du spara en rummall under <em>Egna mallar</em> i möbleringsläge. Mallen sparar bänkarnas placering men inte eleverna.</p>
+  </section>
+
+  <hr>
+
+  <!-- TIPS -->
+  <section id="tips">
+    <h2>Tips och felsökning</h2>
+
+    <h3>&quot;Möblera klassrummet först!&quot;</h3>
+    <p>Det finns inga bänkar på canvas. Gå in i möbleringsläge och lägg till bänkar, eller välj en automatisk layout.</p>
+
+    <h3>&quot;Inga elever i klassen.&quot;</h3>
+    <p>Lägg till elever på fliken Elever innan du genererar.</p>
+
+    <h3>Algoritmen hittar ingen bra lösning</h3>
+    <ul>
+      <li>Kontrollera om du har motstridiga regler – t.ex. en elev som ska sitta <em>ensam</em> men också <em>ska sitta bredvid</em> någon.</li>
+      <li>Räkna att det finns tillräckligt med platser – antal bänkplatser måste vara minst lika många som elever.</li>
+      <li>För många &quot;får ej sitta bredvid&quot;-regler kan göra det svårt att placera alla.</li>
+      <li>Prova att klicka Generera flera gånger, eller lås de platser du redan gillar och generera om.</li>
+    </ul>
+
+    <h3>Orange markering – historikkonflikt</h3>
+    <p>Elever som suttit bredvid varandra i en tidigare sparad placering hamnar bredvid varandra igen. Det är en påminnelse, inte ett fel – du kan spara placeringen ändå om du vill.</p>
+
+    <h3>Data försvann</h3>
+    <ul>
+      <li>Har du rensat webbläsarens data? Då försvinner sparningen i webbläsaren.</li>
+      <li>Arbetar du i inkognitoläge? Data sparas inte mellan sessioner.</li>
+      <li>Öppna en backup-fil via <strong>Öppna</strong> om du har sparat en tidigare.</li>
+    </ul>
+
+    <h3>Bra vanor</h3>
+    <ul>
+      <li>Spara projektet till fil med jämna mellanrum som backup.</li>
+      <li>Spara placeringar i historiken innan du genererar om – då kan du gå tillbaka.</li>
+      <li>Använd tydliga namn i historiken, t.ex. veckonummer eller datum.</li>
+      <li>Spara rummallar om du undervisar i flera olika lokaler.</li>
+    </ul>
+
+    <div class="card tip">
+      <strong>Automatisk rensning:</strong> Placeringar i historiken som är äldre än tolv månader raderas automatiskt. Projektfiler äldre än tolv månader kan inte öppnas – spara nya kopior om du behöver långtidsarkiv.
+    </div>
+  </section>
+
+  <footer>
+    <p>Klassrumsplacering v2.1.0 – Användarmanual för lärare</p>
+    <p>All data lagras lokalt på din dator. Ingen information skickas till externa servrar.</p>
+  </footer>
+
+</div>
+
+</body>
+</html>

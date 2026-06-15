@@ -28,6 +28,10 @@ jobs:
         run: npm install
       - name: Build
         run: npm run build
+      - name: Copy user manual
+        run: |
+          cp docs/anvandarmanual.html dist/
+          cp -r docs/images dist/images
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
